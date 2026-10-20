@@ -56,8 +56,11 @@ function RootNavigator() {
   const signedIn = session !== null;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-      <Stack.Protected guard={signedIn && (role === "karyawan" || role === "spv")}>
-        <Stack.Screen name="index" />
+      <Stack.Protected guard={signedIn && role === "karyawan"}>
+        <Stack.Screen name="(tabs)" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && role === "spv"}>
+        <Stack.Screen name="spv" />
       </Stack.Protected>
       <Stack.Protected guard={signedIn && role === "admin"}>
         <Stack.Screen name="admin" />

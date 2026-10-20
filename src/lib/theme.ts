@@ -10,8 +10,8 @@ export const colors = {
   dangerBg: "#2a1618",
 } as const;
 
-// Warna dari desain layar login (Stitch: mobile_login_absensi_ekspedisi).
-export const loginColors = {
+// Warna dari desain Stitch (login, check in/out, riwayat, profil).
+export const appColors = {
   surface: "#0b1321",
   card: "#18202e",
   cardHigh: "#222a39",
@@ -23,6 +23,12 @@ export const loginColors = {
   primary: "#a5e7ff",
   tint: "#47d6ff",
   onPrimary: "#003543",
+  success: "#10b981",
+  successBg: "rgba(2, 44, 34, 0.4)",
+  warning: "#f59e0b",
+  warningBg: "rgba(69, 26, 3, 0.4)",
+  absent: "#f43f5e",
+  absentBg: "rgba(76, 5, 25, 0.4)",
 } as const;
 
 // Font Inter (dimuat di src/app/_layout.tsx).

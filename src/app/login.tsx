@@ -1,6 +1,5 @@
 import Constants from "expo-constants";
 import { Image } from "expo-image";
-import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,22 +16,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Icon, type IconName } from "@/components/Icon";
 import { useAuth } from "@/lib/auth";
-import { colors, fonts, loginColors as c } from "@/lib/theme";
-
-type IconName = NonNullable<Exclude<SymbolViewProps["name"], string>["android"]>;
-
-/** Ikon Material Symbols (Android/web) dengan padanan SF Symbols di iOS. */
-function Icon({ android, ios, size = 20, color }: { android: IconName; ios: string; size?: number; color: string }) {
-  return (
-    <SymbolView
-      name={{ android, ios: ios as never, web: android }}
-      size={size}
-      tintColor={color}
-      style={{ width: size, height: size }}
-    />
-  );
-}
+import { appColors as c, colors, fonts } from "@/lib/theme";
 
 type FieldProps = TextInputProps & {
   label: string;

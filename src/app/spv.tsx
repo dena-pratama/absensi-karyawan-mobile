@@ -15,8 +15,8 @@ type AppUserRow = {
   branch: { name: string; code: string } | null;
 };
 
-/** Layar utama sementara (karyawan & SPV) — nanti diganti tab Absen / Riwayat / Profil. */
-export default function Home() {
+/** Layar sementara untuk SPV — fitur SPV (pantau absen cabang) belum dibuat. Absen GPS + selfie khusus akun karyawan. */
+export default function Spv() {
   const { session, role, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const userId = session?.user.id;
@@ -59,7 +59,7 @@ export default function Home() {
           </View>
         )}
       </Panel>
-      <Text style={styles.note}>Fitur absen (GPS + selfie) sedang disiapkan.</Text>
+      <Text style={styles.note}>Absen GPS + selfie khusus akun karyawan. Fitur pantau absen cabang untuk SPV sedang disiapkan.</Text>
       <View style={{ marginTop: 20 }}>
         <Button label="Keluar" variant="outline" onPress={signOut} />
       </View>

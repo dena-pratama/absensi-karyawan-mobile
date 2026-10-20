@@ -2,6 +2,33 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-21 — Tab Check In, Check Out, Riwayat, Profil (GPS + selfie)
+
+**Database** (repo web, `supabase/migrations/20261021020000_attendance_check_in_out.sql`).
+**Wajib dijalankan dulu** di Supabase SQL Editor, tanpa itu tombol kirim absen akan gagal:
+- kolom jam / lokasi / jarak / foto untuk check-in & check-out di `attendance_daily`;
+- bucket foto privat `attendance-selfie`;
+- fungsi `attendance_check`: jam dari server, radius cabang dicek di server, fake GPS ditolak.
+
+**App**
+- Paket baru: `expo-location`, `expo-camera`, `expo-image-manipulator`, `expo-file-system` (semuanya ada di Expo Go).
+  Izin hanya lokasi saat app dibuka (tanpa latar belakang) dan kamera (tanpa mikrofon).
+- Karyawan → 4 tab (`src/app/(tabs)/`):
+  - **Check In / Check Out**: sapaan + jam WIB berjalan, kartu **Lokasi GPS** (jarak ke titik cabang, akurasi,
+    status dalam/luar area, deteksi lokasi palsu), kartu **Foto Selfie** (kamera depan, foto dikecilkan
+    ke 720 px sebelum diunggah), tombol kirim aktif hanya jika lokasi OK + foto ada.
+    Check Out hanya bisa setelah Check In. Status Sakit/Tidak Hadir dari SPV ditampilkan.
+  - **Riwayat**: pilih bulan, statistik (hadir, sakit, tidak hadir, jam kerja), daftar harian jam masuk/pulang + durasi.
+  - **Profil**: nama, NIK, jabatan, cabang, status kerja, tanggal bergabung, area absen, tombol Keluar.
+- SPV → layar sementara `spv.tsx` (absen GPS khusus karyawan; fitur pantau cabang belum dibuat).
+- Kode: `src/lib/{employee,attendance,location}.ts(x)`, `src/components/{kit,Icon}.tsx`, `src/components/attendance/`.
+
+**Dari desain yang sengaja tidak dipakai**: peta (butuh API key Google), "AI Biometrik / deteksi helm & APD",
+"On Schedule / Tepat Waktu / Toleransi" (aturan telat belum diputuskan), libur & sisa kuota, unduh PDF / Excel,
+pengaturan notifikasi / auto GPS logging / ganti PIN / hotline, foto profil (belum ada di database).
+
+**Batasan sekarang**: Check Out harus di tanggal WIB yang sama dengan Check In (shift lewat tengah malam belum didukung).
+
 ## 2026-10-21 — Ikon app disamakan dengan web
 
 - Ikon app memakai logo web (`absensi-karyawan/src/app/icon.svg`): simbol jaringan cyan `#00d2ff`
