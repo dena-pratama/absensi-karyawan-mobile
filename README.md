@@ -1,56 +1,87 @@
-# Welcome to your Expo app 👋
+# Absensi Ekspedisi — Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplikasi Android (dan iOS) untuk karyawan & SPV: absen harian dengan **GPS** (dalam
+radius cabang) + **selfie** kamera. Terhubung ke database Supabase yang **sama** dengan
+panel web admin ([absensi-karyawan](https://github.com/dena-pratama/absensi-karyawan)).
 
-## Get started
+![Expo](https://img.shields.io/badge/Expo-SDK_58-000020?logo=expo)
+![React Native](https://img.shields.io/badge/React_Native-0.88-61dafb?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
+![Status](https://img.shields.io/badge/status-awal_pengembangan-amber)
 
-1. Install dependencies
+## Hubungan dengan repo web
 
+```
+ absensi-karyawan (web, Next.js → Vercel)      absensi-karyawan-mobile (repo ini, Expo)
+            │                                                 │
+            └────────────►  Supabase (1 database)  ◄─────────┘
+                       tabel · RLS per role · akun login · storage foto
+```
+
+- **Skema database & RLS hanya diubah di repo web** (`supabase/migrations/`). App ini mengikuti.
+- App memakai **publishable key** saja; akses data dibatasi RLS (karyawan hanya data dirinya, SPV hanya cabangnya).
+- Akun karyawan / SPV dibuat admin di web: *Pengaturan → Pengguna & Akses*.
+- Titik & radius GPS cabang diatur admin di web: *Pengaturan → Manajemen Cabang → Area GPS Absen*.
+
+## Teknologi
+
+| Lapisan | Teknologi |
+| --- | --- |
+| Framework | Expo SDK 58, React Native 0.88, React 19 |
+| Navigasi | Expo Router (file-based, `src/app/`) |
+| Bahasa | TypeScript (strict) |
+| Backend | Supabase (`@supabase/supabase-js`) — *akan dipasang* |
+| Fitur HP | Lokasi (GPS) & kamera — *akan dipasang* |
+
+## Struktur direktori
+
+```
+.
+├── src/
+│   ├── app/              # Layar & layout (Expo Router) — hanya file rute di sini
+│   │   ├── _layout.tsx
+│   │   └── index.tsx     # Layar sementara
+│   └── shared/           # Salinan dari repo web (label status/role, GPS, format tanggal WIB)
+├── assets/               # Ikon & splash
+├── app.json              # Nama app, package id, plugin
+└── .env.example          # Contoh konfigurasi Supabase
+```
+
+Rencana berikutnya: `src/lib/` (client Supabase, sesi), `src/data/` (query absensi & profil),
+`src/components/`, dan rute `login`, `(tabs)/absen`, `riwayat`, `profil`.
+
+## Memulai
+
+1. Prasyarat: Node.js 20+, dan app **Expo Go** di HP Android (atau emulator).
+2. Install & konfigurasi:
    ```bash
    npm install
+   cp .env.example .env.local   # isi URL & publishable key Supabase
    ```
-
-2. Start the app
-
+3. Jalankan, lalu scan QR code dengan Expo Go:
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+> Fitur kamera/GPS tertentu nanti mungkin butuh *development build* (`npx expo run:android`
+> atau EAS Build) — Expo Go hanya berisi modul native bawaan.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Perintah
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| Perintah | Fungsi |
+| --- | --- |
+| `npx expo start` | Server development (scan QR dengan Expo Go). |
+| `npx expo install <paket>` | Tambah paket dengan versi yang cocok untuk SDK 58 (**jangan** `npm install` langsung). |
+| `npx tsc --noEmit` | Cek tipe TypeScript. |
+| `npx expo lint` | Lint. |
+| `npx expo-doctor` | Diagnosis konfigurasi & dependency. |
 
-## Get a fresh project
+## Keamanan
 
-When you're ready, run:
+- Jangan pernah menaruh **secret key / service_role** di app ini — APK bisa dibongkar.
+- `.env.local` tidak di-commit (lihat `.gitignore`).
+- Lokasi diambil **hanya saat menekan tombol absen** (tanpa pelacakan latar belakang); foto selfie disimpan privat.
 
-```bash
-npm run reset-project
-```
+---
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+© 2026 Absensi Ekspedisi · Dikembangkan oleh Dena Pratama.
