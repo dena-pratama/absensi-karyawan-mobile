@@ -2,6 +2,31 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-21 — EAS siap + development build Android pertama
+
+- `eas init` di akun **denapratama**: proyek baru `@denapratama/absensi-karyawan-mobile`
+  (projectId di `app.json` → `extra.eas.projectId`, `owner`). `eas init` juga menambah daftar izin Android
+  (kamera, lokasi) ke `app.json`.
+- `eas.json`:
+  - `development`: development build (`expo-dev-client`), APK, dibagikan internal;
+  - `preview`: APK biasa untuk dicoba tim;
+  - `production`: untuk Play Store, nomor versi naik otomatis (versi disimpan di EAS).
+- Variabel `EXPO_PUBLIC_SUPABASE_URL` (plaintext) & `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (sensitive)
+  diisi di EAS untuk environment development, preview, production. `.env.local` tidak ikut terunggah ke EAS.
+- Keystore Android dibuat & disimpan di server Expo.
+- Build development Android pertama (`39d6a6a3…`) **gagal** di `npm ci`: `package-lock.json` dari npm 11
+  di Windows tidak memuat `@emnapi/core` & `@emnapi/runtime` (peer opsional). Lock dibuat ulang dengan
+  `npx npm@10 install --package-lock-only`, dicek dengan `npm ci --dry-run` (npm 10 & 11).
+  **Kalau build EAS gagal lagi dengan "Missing … from lock file", ulangi cara ini.**
+- Build kedua `93469e5d-9cf6-4d9a-b03c-061b899fe50c` **berhasil** (APK development).
+
+## 2026-10-21 — Pasang expo-dev-client
+
+- `expo-dev-client` dipasang (`npx expo install`) sebagai persiapan **development build**: app versi
+  pengembangan buatan sendiri (dibuat lewat EAS Build), dengan ikon & nama app sendiri.
+- `npm start` tetap mode **Expo Go** (`expo start --go`). `npm run start:dev` untuk development build.
+- Belum ada: `eas.json` & `projectId` EAS (perlu `npx eas-cli@latest login` oleh user, lalu `eas init`).
+
 ## 2026-10-21 — Tab Check In, Check Out, Riwayat, Profil (GPS + selfie)
 
 **Database** (repo web, `supabase/migrations/20261021020000_attendance_check_in_out.sql`).
