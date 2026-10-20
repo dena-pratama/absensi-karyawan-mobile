@@ -30,7 +30,7 @@ panel web admin ([absensi-karyawan](https://github.com/dena-pratama/absensi-kary
 | Framework | Expo SDK 58, React Native 0.88, React 19 |
 | Navigasi | Expo Router (file-based, `src/app/`) |
 | Bahasa | TypeScript (strict) |
-| Backend | Supabase (`@supabase/supabase-js`) — *akan dipasang* |
+| Backend | Supabase (`@supabase/supabase-js`), sesi login terenkripsi (SecureStore + AsyncStorage) |
 | Fitur HP | Lokasi (GPS) & kamera — *akan dipasang* |
 
 ## Struktur direktori
@@ -40,15 +40,20 @@ panel web admin ([absensi-karyawan](https://github.com/dena-pratama/absensi-kary
 ├── src/
 │   ├── app/              # Layar & layout (Expo Router) — hanya file rute di sini
 │   │   ├── _layout.tsx
-│   │   └── index.tsx     # Layar sementara
+│   │   ├── login.tsx     # Login email + kata sandi
+│   │   ├── index.tsx     # Layar utama karyawan & SPV (sementara)
+│   │   ├── admin.tsx     # Akun admin → diarahkan ke panel web
+│   │   └── tanpa-akses.tsx  # Akun belum diberi role
+│   ├── lib/              # Client Supabase, context login & role, warna tema
+│   ├── components/       # Komponen tampilan dasar
 │   └── shared/           # Salinan dari repo web (label status/role, GPS, format tanggal WIB)
 ├── assets/               # Ikon & splash
 ├── app.json              # Nama app, package id, plugin
 └── .env.example          # Contoh konfigurasi Supabase
 ```
 
-Rencana berikutnya: `src/lib/` (client Supabase, sesi), `src/data/` (query absensi & profil),
-`src/components/`, dan rute `login`, `(tabs)/absen`, `riwayat`, `profil`.
+Rencana berikutnya: `src/data/` (query absensi & profil) dan rute `(tabs)/absen`, `riwayat`, `profil`.
+Riwayat perubahan ada di [DEVLOG.md](DEVLOG.md).
 
 ## Memulai
 
