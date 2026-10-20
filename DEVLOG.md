@@ -2,6 +2,20 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-21 — Desain baru layar login
+
+- Layar login (`src/app/login.tsx`) dibuat ulang mengikuti desain Stitch
+  `mobile_login_absensi_ekspedisi`: logo truk dengan titik cyan menyala, kartu login gelap,
+  kolom berikon, tombol tampil/sembunyikan kata sandi, tombol "Login →" bercahaya.
+- Font **Inter** (`@expo-google-fonts/inter`), ikon Material Symbols lewat `expo-symbols`
+  (iOS memakai SF Symbols). Warna desain disimpan di `loginColors` (`src/lib/theme.ts`).
+- Bagian desain yang **sengaja tidak dipakai** (bertentangan dengan aturan yang sudah ada / belum diputuskan):
+  - Login pakai **NIK / PIN** → tetap **email + kata sandi** (akun login Supabase memakai email).
+  - **Lupa PIN?** → tidak ada; reset sandi lewat admin.
+  - **Pilihan Hub/Cabang + "Dalam Radius 100m"** dan **"GPS Ready"** → cabang sudah ditentukan dari
+    penempatan karyawan, dan aturan GPS belum diputuskan.
+  - **"Ingat Akun di Handphone ini"** → sesi selalu diingat sampai menekan Keluar.
+
 ## 2026-10-21 — Supabase + login + arah layar sesuai role
 
 **Yang ditambahkan**

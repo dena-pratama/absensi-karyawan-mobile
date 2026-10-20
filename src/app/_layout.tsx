@@ -1,3 +1,10 @@
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  useFonts,
+} from "@expo-google-fonts/inter";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -36,12 +43,15 @@ export default function RootLayout() {
 /** Mengarahkan layar sesuai status login & role. */
 function RootNavigator() {
   const { initializing, session, role } = useAuth();
+  // Kalau font gagal dimuat (fontError), app tetap jalan dengan font bawaan HP.
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
+  const ready = !initializing && (fontsLoaded || fontError !== null);
 
   useEffect(() => {
-    if (!initializing) SplashScreen.hide();
-  }, [initializing]);
+    if (ready) SplashScreen.hide();
+  }, [ready]);
 
-  if (initializing) return null;
+  if (!ready) return null;
 
   const signedIn = session !== null;
   return (
