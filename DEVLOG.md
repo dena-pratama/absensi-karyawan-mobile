@@ -2,6 +2,15 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-21 — Ikon app disamakan dengan web
+
+- Ikon app memakai logo web (`absensi-karyawan/src/app/icon.svg`): simbol jaringan cyan `#00d2ff`
+  di atas `#18202e`. Dibuat ulang: `icon.png` (1024), ikon adaptif Android (latar, depan, monokrom),
+  `splash-icon.png`, `favicon.png`.
+- iOS kini memakai `icon.png` biasa (folder `assets/expo.icon` bawaan template dihapus).
+- Catatan: di **Expo Go** yang tampil tetap ikon Expo Go. Ikon baru terlihat setelah app dibuild
+  (development build / EAS Build).
+
 ## 2026-10-21 — Desain baru layar login
 
 - Layar login (`src/app/login.tsx`) dibuat ulang mengikuti desain Stitch
