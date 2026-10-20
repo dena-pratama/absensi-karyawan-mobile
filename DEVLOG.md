@@ -2,6 +2,17 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-21 — Build preview Android (APK untuk dibagikan)
+
+- Build `preview` `0982e7b4-f8c0-4301-bd26-9a0aeac810bf` **berhasil**. APK mode rilis, tersambung ke database Supabase asli.
+- Ukuran **±126 MB** (development build ±267 MB). Masih besar karena satu APK berisi 4 jenis prosesor
+  (arm64-v8a, armeabi-v7a, x86, x86_64); HP Android biasa hanya butuh arm64-v8a / armeabi-v7a.
+- Lalu dipasang `expo-build-properties` dengan `android.buildArchs: ["arm64-v8a", "armeabi-v7a"]`:
+  x86/x86_64 (emulator) dibuang. Efek samping: build baru tidak bisa dipasang di emulator x86.
+  Build preview ulang `57ec32ad-12ce-4af4-a7fa-dbac840927c6`: **±64 MB** (turun dari ±126 MB).
+- `npx expo install` kembali membuang `@emnapi/*` dari lock file → diperbaiki lagi dengan
+  `npx npm@10 install --package-lock-only` (langkah ini kini dicatat di README).
+
 ## 2026-10-21 — EAS siap + development build Android pertama
 
 - `eas init` di akun **denapratama**: proyek baru `@denapratama/absensi-karyawan-mobile`

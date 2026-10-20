@@ -78,6 +78,7 @@ Riwayat perubahan ada di [DEVLOG.md](DEVLOG.md).
 | `npm start` / `npx expo start --go` | Server development untuk **Expo Go** (scan QR). Tanpa `--go`, Expo masuk mode development build dan QR-nya tidak bisa dibuka Expo Go. |
 | `npm run start:dev` | Server untuk **development build** (app buatan sendiri berisi `expo-dev-client`, dibuat lewat EAS Build). Belum bisa dipakai sebelum app development build terpasang di HP. |
 | `npx expo install <paket>` | Tambah paket dengan versi yang cocok untuk SDK 58 (**jangan** `npm install` langsung). |
+| `npx npm@10 install --package-lock-only` | **Setelah menambah paket**, sebelum build EAS: npm di Windows suka membuang `@emnapi/*` dari `package-lock.json`, sehingga `npm ci` di server EAS gagal ("Missing … from lock file"). |
 | `npx tsc --noEmit` | Cek tipe TypeScript. |
 | `npx expo lint` | Lint. |
 | `npx expo-doctor` | Diagnosis konfigurasi & dependency. |
