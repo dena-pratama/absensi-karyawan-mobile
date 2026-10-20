@@ -8,6 +8,7 @@ Catatan aktivitas penting. Entri terbaru di atas.
   di atas `#18202e`. Dibuat ulang: `icon.png` (1024), ikon adaptif Android (latar, depan, monokrom),
   `splash-icon.png`, `favicon.png`.
 - iOS kini memakai `icon.png` biasa (folder `assets/expo.icon` bawaan template dihapus).
+- Logo truk di layar login juga diganti dengan simbol logo yang sama.
 - Catatan: di **Expo Go** yang tampil tetap ikon Expo Go. Ikon baru terlihat setelah app dibuild
   (development build / EAS Build).
 

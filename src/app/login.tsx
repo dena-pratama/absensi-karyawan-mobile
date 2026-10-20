@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { Image } from "expo-image";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import { useRef, useState } from "react";
 import {
@@ -98,7 +99,14 @@ export default function Login() {
           <View style={styles.brand}>
             <View style={styles.logoOuter}>
               <View style={styles.logoInner}>
-                <Icon android="local_shipping" ios="truck.box.fill" size={28} color={colors.brand} />
+                {/* Simbol logo app (gambar yang sama dengan splash / ikon app). */}
+                <Image
+                  source={require("@/assets/images/splash-icon.png")}
+                  style={styles.logoGlyph}
+                  contentFit="contain"
+                  accessibilityLabel="Logo Absensi Ekspedisi"
+                />
+
               </View>
               <View style={styles.logoDot} />
             </View>
@@ -209,6 +217,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  logoGlyph: { width: 28, height: 28 },
   logoDot: {
     position: "absolute",
     top: -4,
