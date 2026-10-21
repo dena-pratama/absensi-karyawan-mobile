@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Icon, type IconName } from "@/components/Icon";
 import { ActionButton, Avatar, Card, CardTitle, kit, LoadingCard, Notice, TabScreen } from "@/components/kit";
 import { useAuth } from "@/lib/auth";
+import { formatRange } from "@/lib/backup";
 import { useEmployee, type EmployeeProfile } from "@/lib/employee";
 import { appColors as c, colors, fonts } from "@/lib/theme";
 import { formatDateLong } from "@/shared/format";
@@ -95,6 +96,20 @@ export default function Profil() {
               />
             )}
           </Card>
+
+          {profile.backups.length > 0 && (
+            <Card>
+              <CardTitle icon={{ android: "swap_horiz", ios: "arrow.left.arrow.right" }} label="Jadwal Backup" />
+              {profile.backups.map((b) => (
+                <InfoRow
+                  key={b.id}
+                  icon={{ android: "event", ios: "calendar" }}
+                  label={`${formatRange(b.dateFrom, b.dateTo)}${b.id === profile.backupToday?.id ? " • hari ini" : ""}`}
+                  value={`${b.toBranch.code} - ${b.toBranch.name}${b.note ? ` (${b.note})` : ""}`}
+                />
+              ))}
+            </Card>
+          )}
 
           <Notice
             tone="muted"

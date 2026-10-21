@@ -2,6 +2,38 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-22 — Backup karyawan antar cabang + SPV banyak cabang
+
+Butuh migrasi repo web `supabase/migrations/20261022000000_backup_and_multi_branch_spv.sql`.
+Saat ditulis, migrasi itu **belum dijalankan**. Sebelum migrasi dijalankan, app tetap jalan:
+backup dianggap kosong, SPV memakai cabang tunggal `app_user.branch_id`.
+
+**Karyawan**
+- Penempatan dibaca yang **berlaku hari ini** (`valid_from <= hari ini`, `valid_to` kosong / `>= hari ini`),
+  bukan sekadar `valid_to` kosong, karena sekarang ada mutasi terjadwal.
+- Backup hari ini (`employee_backup`) → kotak "Hari ini backup di KODE - Nama" di layar Check In/Out.
+  Info jarak GPS memakai cabang backup **dan** cabang penempatan, dipilih yang terdekat (sama dengan
+  `attendance_check()` di server). Check out memakai cabang baris check in. Validasi akhir tetap di server.
+- Profil: kartu "Jadwal Backup" (hari ini & akan datang).
+
+**SPV** (rute `src/app/spv/`, menggantikan layar sementara `spv.tsx`): 3 tab
+- **Ceklis**:
+  - pemilih cabang (dari `app_user_branch`) dan tanggal (maks. hari ini);
+  - roster = karyawan cabang itu + karyawan backup yang masuk ("Backup dari X"). Karyawan cabang itu
+    yang sedang backup di cabang lain hanya bisa dilihat ("Sedang backup di Y");
+  - tombol Hadir / Sakit / Tidak Hadir per karyawan, lalu Simpan, seperti `saveAttendance` di web.
+    Jam check-in/out GPS ditampilkan dan tidak diubah.
+- **Backup**:
+  - daftar backup aktif & akan datang yang melibatkan cabang SPV;
+  - tambah / ubah / hapus: pilih karyawan dari cabang SPV, cabang tujuan (semua cabang), tanggal mulai & selesai
+    (default 1 hari, maks. 93 hari), keterangan;
+  - pesan error dari trigger database (P0001) ditampilkan apa adanya.
+- **Profil**: username, daftar cabang, tombol Keluar. SPV tidak absen sendiri.
+
+Kode baru: `src/lib/backup.ts`, `src/lib/spv.tsx`, `src/components/pickers.tsx` (chip cabang, langkah tanggal,
+kolom pilihan dengan pencarian). Dicek: `tsc`, `expo lint`, `expo-doctor`, bundle Android, layar login di
+pratinjau web. Layar SPV & backup belum dicoba dengan akun asli. Butuh build EAS baru supaya APK ikut berubah.
+
 ## 2026-10-21 — Login dengan username (sama dengan panel web)
 
 - `src/shared/login-id.ts` disalin dari repo web (`src/lib/login-id.ts`). Username "budi01" diubah jadi

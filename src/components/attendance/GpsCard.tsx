@@ -9,41 +9,53 @@ import { Card, CardTitle, ChipButton, kit, Notice, Pill, type Tone } from "../ki
 export type GpsCheck = {
   /** true = boleh absen (dalam radius cabang, bukan lokasi palsu). */
   ok: boolean;
+  /** Cabang yang dipakai untuk perhitungan (yang terdekat bila ada beberapa). */
+  branch: BranchInfo | null;
   tone: Tone;
   title: string;
   message?: string;
 };
 
-/** Nilai status GPS terhadap area cabang. Server mengecek ulang dengan rumus yang sama. */
-export function evaluateGps(branch: BranchInfo | null, gps: GpsState): GpsCheck {
-  if (!branch) return { ok: false, tone: "warning", title: "Belum ada penempatan cabang", message: "Hubungi admin." };
-  if (branch.latitude === null || branch.longitude === null) {
-    return { ok: false, tone: "warning", title: "Titik GPS cabang belum diatur", message: "Minta admin mengatur Area GPS Absen cabang di panel web." };
+/**
+ * Nilai status GPS terhadap area cabang yang boleh dipakai absen (cabang penempatan dan/atau
+ * cabang backup hari ini). Seperti server: dipilih cabang terdekat. Server mengecek ulang.
+ */
+export function evaluateGps(candidates: BranchInfo[], gps: GpsState): GpsCheck {
+  const first = candidates[0] ?? null;
+  const withGps = candidates.filter((b) => b.latitude !== null && b.longitude !== null);
+  if (!first) return { ok: false, branch: null, tone: "warning", title: "Belum ada penempatan cabang", message: "Hubungi admin." };
+  if (withGps.length === 0) {
+    return { ok: false, branch: first, tone: "warning", title: "Titik GPS cabang belum diatur", message: "Minta admin mengatur Area GPS Absen cabang di panel web." };
   }
+  const branchNow = (check: Omit<GpsCheck, "branch">): GpsCheck => ({ ...check, branch: first });
   switch (gps.status) {
     case "locating":
-      return { ok: false, tone: "info", title: "Mencari lokasi Anda…", message: "Pastikan GPS aktif. Di tempat terbuka biasanya lebih cepat." };
+      return branchNow({ ok: false, tone: "info", title: "Mencari lokasi Anda…", message: "Pastikan GPS aktif. Di tempat terbuka biasanya lebih cepat." });
     case "denied":
-      return {
+      return branchNow({
         ok: false,
         tone: "danger",
         title: "Izin lokasi ditolak",
         message: gps.canAskAgain
           ? "Tekan Perbarui lalu pilih Izinkan."
           : "Buka Pengaturan HP → Aplikasi → izinkan Lokasi untuk app ini.",
-      };
+      });
     case "off":
-      return { ok: false, tone: "danger", title: "GPS HP mati", message: "Nyalakan Lokasi/GPS di HP lalu tekan Perbarui." };
+      return branchNow({ ok: false, tone: "danger", title: "GPS HP mati", message: "Nyalakan Lokasi/GPS di HP lalu tekan Perbarui." });
     case "error":
-      return { ok: false, tone: "danger", title: "Lokasi belum didapat", message: gps.message };
+      return branchNow({ ok: false, tone: "danger", title: "Lokasi belum didapat", message: gps.message });
   }
   if (gps.fix.mocked) {
-    return { ok: false, tone: "danger", title: "Lokasi palsu terdeteksi", message: "Matikan aplikasi fake GPS / lokasi tiruan lalu coba lagi." };
+    return branchNow({ ok: false, tone: "danger", title: "Lokasi palsu terdeteksi", message: "Matikan aplikasi fake GPS / lokasi tiruan lalu coba lagi." });
   }
-  const d = Math.round(distanceM(gps.fix, { lat: branch.latitude, lng: branch.longitude }));
+  const fix = gps.fix;
+  const [branch, d] = withGps
+    .map((b) => [b, Math.round(distanceM(fix, { lat: b.latitude!, lng: b.longitude! }))] as const)
+    .reduce((best, cur) => (cur[1] < best[1] ? cur : best));
   if (d > branch.geofence_radius_m) {
     return {
       ok: false,
+      branch,
       tone: "danger",
       title: "Di luar area cabang",
       message: `Jarak ${d} m dari titik cabang (batas ${branch.geofence_radius_m} m). Mendekatlah lalu tekan Perbarui.`,
@@ -51,6 +63,7 @@ export function evaluateGps(branch: BranchInfo | null, gps: GpsState): GpsCheck 
   }
   return {
     ok: true,
+    branch,
     tone: "success",
     title: "Dalam area cabang",
     message: `Jarak ${d} m dari titik cabang (batas ${branch.geofence_radius_m} m).`,
@@ -58,16 +71,15 @@ export function evaluateGps(branch: BranchInfo | null, gps: GpsState): GpsCheck 
 }
 
 export function GpsCard({
-  branch,
   gps,
   check,
   onRefresh,
 }: {
-  branch: BranchInfo | null;
   gps: GpsState;
   check: GpsCheck;
   onRefresh: () => void;
 }) {
+  const branch = check.branch;
   const accuracy = gps.status === "ok" && gps.fix.accuracy !== null ? `±${Math.round(gps.fix.accuracy)} m` : null;
   return (
     <Card>

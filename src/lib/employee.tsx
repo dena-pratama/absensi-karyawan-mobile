@@ -1,10 +1,11 @@
-// Data karyawan yang sedang login (profil, cabang penempatan aktif) + absensi hari ini.
+// Data karyawan yang sedang login (profil, cabang penempatan hari ini, backup) + absensi hari ini.
 // Dipakai bersama oleh tab Check In, Check Out, Riwayat, dan Profil.
 
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { todayWIB } from "@/shared/format";
 import { ATTENDANCE_COLUMNS, type AttendanceRow } from "./attendance";
+import { BRANCH_COLUMNS, fetchBackups, type Backup } from "./backup";
 import { useAuth } from "./auth";
 import { supabase } from "./supabase";
 
@@ -23,9 +24,13 @@ export type EmployeeProfile = {
   nik: string;
   contract_type: "tetap" | "pkwt" | "mitra";
   join_date: string | null;
-  /** Penempatan aktif; null kalau belum ditempatkan admin. */
+  /** Penempatan yang berlaku hari ini (WIB); null kalau belum ditempatkan admin. */
   branch: BranchInfo | null;
   jobRole: string | null;
+  /** Penugasan backup ke cabang lain yang berlaku hari ini; null kalau tidak ada. */
+  backupToday: Backup | null;
+  /** Backup hari ini & yang akan datang. */
+  backups: Backup[];
 };
 
 type EmployeeState = {
@@ -39,8 +44,13 @@ type EmployeeState = {
 
 const EmployeeContext = createContext<EmployeeState | null>(null);
 
-type EmployeeQueryRow = Omit<EmployeeProfile, "branch" | "jobRole"> & {
-  employee_assignment: { branch: BranchInfo | null; job_role: { name: string } | null }[];
+type EmployeeQueryRow = Omit<EmployeeProfile, "branch" | "jobRole" | "backupToday" | "backups"> & {
+  employee_assignment: {
+    valid_from: string;
+    valid_to: string | null;
+    branch: BranchInfo | null;
+    job_role: { name: string } | null;
+  }[];
 };
 
 async function loadEmployee(userId: string) {
@@ -55,15 +65,19 @@ async function loadEmployee(userId: string) {
   const { data, error } = await supabase
     .from("employee")
     .select(
-      "id, full_name, nik, contract_type, join_date, employee_assignment(branch:branch_id(id, code, name, latitude, longitude, geofence_radius_m), job_role:job_role_id(name))",
+      `id, full_name, nik, contract_type, join_date, employee_assignment(valid_from, valid_to, branch:branch_id(${BRANCH_COLUMNS}), job_role:job_role_id(name))`,
     )
     .eq("id", me.employee_id)
-    .is("employee_assignment.valid_to", null)
     .single();
   if (error) throw error;
 
+  // Penempatan yang berlaku hari ini (bisa ada mutasi terjadwal dengan tanggal efektif di masa depan).
+  const today = todayWIB();
   const row = data as unknown as EmployeeQueryRow;
-  const active = row.employee_assignment[0];
+  const active = row.employee_assignment
+    .filter((a) => a.valid_from <= today && (a.valid_to === null || a.valid_to >= today))
+    .sort((a, b) => b.valid_from.localeCompare(a.valid_from))[0];
+  const { rows: backups } = await fetchBackups({ since: today, employeeId: row.id });
   const profile: EmployeeProfile = {
     id: row.id,
     full_name: row.full_name,
@@ -72,17 +86,19 @@ async function loadEmployee(userId: string) {
     join_date: row.join_date,
     branch: active?.branch ?? null,
     jobRole: active?.job_role?.name ?? null,
+    backupToday: backups.find((b) => b.dateFrom <= today && today <= b.dateTo) ?? null,
+    backups,
   };
 
-  const { data: today, error: todayError } = await supabase
+  const { data: todayRow, error: todayError } = await supabase
     .from("attendance_daily")
     .select(ATTENDANCE_COLUMNS)
     .eq("employee_id", profile.id)
-    .eq("attendance_date", todayWIB())
+    .eq("attendance_date", today)
     .maybeSingle();
   if (todayError) throw todayError;
 
-  return { profile, today: (today as unknown as AttendanceRow | null) ?? null };
+  return { profile, today: (todayRow as unknown as AttendanceRow | null) ?? null };
 }
 
 /** Seperti loadEmployee, tapi error diubah jadi pesan ramah (string). */

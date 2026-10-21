@@ -5,7 +5,8 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { submitAttendance, type CheckKind } from "@/lib/attendance";
-import { useEmployee, type EmployeeProfile } from "@/lib/employee";
+import { formatRange } from "@/lib/backup";
+import { useEmployee, type BranchInfo, type EmployeeProfile } from "@/lib/employee";
 import { locate, type GpsState } from "@/lib/location";
 import { appColors as c, colors, fonts } from "@/lib/theme";
 import { formatTimeWIB } from "@/shared/format";
@@ -117,7 +118,13 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
         ? { tone: "info", label: "Sudah masuk • belum pulang" }
         : { tone: "muted", label: "Belum absen" };
 
-  const gpsCheck = evaluateGps(profile.branch, gps ?? { status: "locating" });
+  // Cabang yang boleh dipakai (sama dengan server): sudah ada baris absen hari ini → cabang baris itu;
+  // belum ada → cabang backup hari ini dan cabang penempatan (dipilih yang terdekat).
+  const candidates: BranchInfo[] = today?.branch
+    ? [today.branch]
+    : [profile.backupToday?.toBranch, profile.branch].filter((b): b is BranchInfo => !!b);
+  const gpsCheck = evaluateGps(candidates, gps ?? { status: "locating" });
+  const backup = profile.backupToday;
   const ready = gpsCheck.ok && !!photoUri && !submitting;
   const missing = !gpsCheck.ok ? "Lokasi belum memenuhi syarat." : !photoUri ? "Ambil foto selfie dulu." : null;
 
@@ -138,6 +145,15 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
   return (
     <TabScreen title={TEXT[kind].title} right={canCapture ? <GpsHeaderPill gps={gps} /> : null} refreshing={refreshing} onRefresh={onRefresh}>
       <GreetingCard profile={profile} status={status} />
+
+      {backup && (
+        <Notice
+          tone="info"
+          icon={{ android: "swap_horiz", ios: "arrow.left.arrow.right" }}
+          title={`Hari ini backup di ${backup.toBranch.code} - ${backup.toBranch.name}`}
+          message={`Penugasan ${formatRange(backup.dateFrom, backup.dateTo)}${backup.note ? ` • ${backup.note}` : ""}. Absen di cabang ini; absensi hari ini dihitung di cabang tersebut.`}
+        />
+      )}
 
       {done && today && (
         <Notice
@@ -170,7 +186,7 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
 
       {canCapture && (
         <>
-          <GpsCard branch={profile.branch} gps={gps ?? { status: "locating" }} check={gpsCheck} onRefresh={updateLocation} />
+          <GpsCard gps={gps ?? { status: "locating" }} check={gpsCheck} onRefresh={updateLocation} />
           <SelfieCard
             active={focused}
             photoUri={photoUri}

@@ -8,6 +8,7 @@ import { Platform } from "react-native";
 
 import { todayWIB } from "@/shared/format";
 import type { AttendanceStatus } from "@/shared/labels";
+import type { BranchInfo } from "./employee";
 import type { GpsFix } from "./location";
 import { supabase } from "./supabase";
 
@@ -24,11 +25,12 @@ export type AttendanceRow = {
   check_in_distance_m: number | null;
   check_out_at: string | null;
   check_out_distance_m: number | null;
-  branch: { code: string; name: string } | null;
+  /** Cabang tempat absen dicatat (bisa cabang backup). */
+  branch: BranchInfo | null;
 };
 
 export const ATTENDANCE_COLUMNS =
-  "id, attendance_date, status, note, check_in_at, check_in_distance_m, check_out_at, check_out_distance_m, branch:branch_id(code, name)";
+  "id, attendance_date, status, note, check_in_at, check_in_distance_m, check_out_at, check_out_distance_m, branch:branch_id(id, code, name, latitude, longitude, geofence_radius_m)";
 
 function friendlyError(error: { code?: string; message: string }): string {
   // Pesan dari fungsi attendance_check sudah berbahasa Indonesia.
