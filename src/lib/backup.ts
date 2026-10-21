@@ -21,6 +21,8 @@ export type Backup = {
 type BackupRow = {
   id: string;
   employee_id: string;
+  from_branch_id: string | null;
+  to_branch_id: string;
   date_from: string;
   date_to: string;
   note: string | null;
@@ -30,7 +32,7 @@ type BackupRow = {
 };
 
 const BACKUP_COLUMNS =
-  "id, employee_id, date_from, date_to, note, employee:employee_id(full_name, nik), " +
+  "id, employee_id, from_branch_id, to_branch_id, date_from, date_to, note, employee:employee_id(full_name, nik), " +
   `from_branch:from_branch_id(id, code, name), to_branch:to_branch_id(${BRANCH_COLUMNS})`;
 
 /** true = tabel / fungsi belum ada di database (migrasi belum dijalankan). */
@@ -42,8 +44,21 @@ export function isMissingSchema(error: { code?: string }) {
  * Backup yang masih berlaku atau akan datang (date_to >= sejak), terlama di atas.
  * RLS yang membatasi: karyawan → miliknya; SPV → yang masuk / keluar cabangnya.
  * ready=false bila tabelnya belum ada.
+ *
+ * Cabang lain (mis. tujuan backup dari cabang SPV) tidak bisa dibaca lewat join karena RLS tabel branch;
+ * `names` (dari backup_branch_options) dipakai untuk mengisi kode & nama cabang itu.
  */
-export async function fetchBackups(opts: { since: string; until?: string; employeeId?: string }) {
+export async function fetchBackups(opts: {
+  since: string;
+  until?: string;
+  employeeId?: string;
+  names?: Map<string, { code: string; name: string }>;
+}) {
+  const named = (id: string) => ({
+    id,
+    code: opts.names?.get(id)?.code ?? "-",
+    name: opts.names?.get(id)?.name ?? "Cabang lain",
+  });
   let q = supabase
     .from("employee_backup")
     .select(BACKUP_COLUMNS)
@@ -56,21 +71,19 @@ export async function fetchBackups(opts: { since: string; until?: string; employ
     if (isMissingSchema(error)) return { ready: false, rows: [] as Backup[] };
     throw error;
   }
-  const rows = ((data ?? []) as unknown as BackupRow[])
-    .filter((r) => r.to_branch)
-    .map(
-      (r): Backup => ({
-        id: r.id,
-        employeeId: r.employee_id,
-        employeeName: r.employee?.full_name ?? "-",
-        nik: r.employee?.nik ?? "-",
-        fromBranch: r.from_branch,
-        toBranch: r.to_branch!,
-        dateFrom: r.date_from,
-        dateTo: r.date_to,
-        note: r.note ?? "",
-      }),
-    );
+  const rows = ((data ?? []) as unknown as BackupRow[]).map(
+    (r): Backup => ({
+      id: r.id,
+      employeeId: r.employee_id,
+      employeeName: r.employee?.full_name ?? "-",
+      nik: r.employee?.nik ?? "-",
+      fromBranch: r.from_branch ?? (r.from_branch_id ? named(r.from_branch_id) : null),
+      toBranch: r.to_branch ?? { ...named(r.to_branch_id), latitude: null, longitude: null, geofence_radius_m: 0 },
+      dateFrom: r.date_from,
+      dateTo: r.date_to,
+      note: r.note ?? "",
+    }),
+  );
   return { ready: true, rows };
 }
 

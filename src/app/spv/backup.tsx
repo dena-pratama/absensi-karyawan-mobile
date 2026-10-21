@@ -9,6 +9,7 @@ import {
   deleteBackup,
   fetchAllBranches,
   fetchBranchEmployees,
+  fetchBranchNames,
   saveBackup,
   useSpv,
   type BranchOption,
@@ -235,7 +236,7 @@ export default function SpvBackup() {
 
   const load = useCallback(async () => {
     try {
-      const result = await fetchBackups({ since: today });
+      const result = await fetchBranchNames().then((names) => fetchBackups({ since: today, names }));
       setRows(result.rows);
       setReady(result.ready);
       setError(null);
@@ -246,7 +247,7 @@ export default function SpvBackup() {
 
   useEffect(() => {
     let active = true;
-    fetchBackups({ since: today })
+    fetchBranchNames().then((names) => fetchBackups({ since: today, names }))
       .then((result) => {
         if (!active) return;
         setRows(result.rows);

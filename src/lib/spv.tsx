@@ -159,10 +159,8 @@ async function queryRoster(by: { branchId: string } | { employeeIds: string[] },
 
 /** Roster satu cabang pada satu tanggal + absensinya. */
 export async function fetchDayRoster(branchId: string, date: string) {
-  const [home, { rows: backups }] = await Promise.all([
-    queryRoster({ branchId }, date),
-    fetchBackups({ since: date, until: date }),
-  ]);
+  const [home, names] = await Promise.all([queryRoster({ branchId }, date), fetchBranchNames()]);
+  const { rows: backups } = await fetchBackups({ since: date, until: date, names });
   const out = new Map(backups.filter((b) => b.fromBranch?.id === branchId).map((b) => [b.employeeId, b]));
   const incoming = backups.filter((b) => b.toBranch.id === branchId);
   const homeIds = new Set(home.map((r) => r.employeeId));
@@ -272,11 +270,27 @@ export async function saveChecklist(
 
 export type BranchOption = { id: string; code: string; name: string };
 
-/** Semua cabang (pilihan cabang tujuan backup). Tabel branch tidak punya status aktif. */
+/**
+ * Semua cabang aktif untuk pilihan cabang tujuan backup, lewat fungsi backup_branch_options()
+ * (khusus admin & SPV). Tabel branch sendiri hanya bisa dibaca untuk cabang milik SPV (RLS).
+ */
 export async function fetchAllBranches(): Promise<BranchOption[]> {
-  const { data, error } = await supabase.from("branch").select("id, code, name").order("code");
-  if (error) throw error;
-  return (data ?? []) as BranchOption[];
+  const { data, error } = await supabase.rpc("backup_branch_options");
+  if (!error) return (data ?? []) as BranchOption[];
+  if (!isMissingSchema(error)) throw error;
+  // Migrasi branch_visibility_fix belum dijalankan → policy lama masih mengizinkan baca tabel branch.
+  const fallback = await supabase.from("branch").select("id, code, name").order("code");
+  if (fallback.error) throw fallback.error;
+  return (fallback.data ?? []) as BranchOption[];
+}
+
+/** Peta id cabang → kode & nama, untuk menampilkan cabang lain pada data backup. */
+export async function fetchBranchNames(): Promise<Map<string, { code: string; name: string }>> {
+  try {
+    return new Map((await fetchAllBranches()).map((b) => [b.id, { code: b.code, name: b.name }]));
+  } catch {
+    return new Map(); // nama cabang lain tampil "-" / "Cabang lain"; data utama tetap tampil
+  }
 }
 
 export type EmployeeOption = { id: string; nik: string; name: string; branchCode: string };

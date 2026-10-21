@@ -2,6 +2,19 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-22 — Fix keamanan: daftar cabang lewat backup_branch_options()
+
+Pasangan migrasi web `20261022010000_branch_visibility_fix.sql`. Migrasi itu menghapus policy
+"semua akun boleh baca semua cabang", jadi karyawan tidak lagi melihat semua cabang.
+- Pilihan cabang tujuan backup (SPV) kini dari `supabase.rpc("backup_branch_options")`, bukan tabel `branch`.
+  Kalau fungsinya belum ada (migrasi belum dijalankan), app memakai cara lama.
+- Cabang di luar milik SPV tidak bisa dibaca lewat join, misalnya tujuan backup dari cabang SPV atau asal
+  karyawan backup yang masuk. `fetchBackups` kini selalu memuat `from_branch_id` / `to_branch_id`, lalu
+  kode & namanya diisi dari peta hasil `backup_branch_options()`. Sebelumnya backup seperti ini hilang
+  dari daftar SPV, karena baris yang `to_branch`-nya kosong dibuang.
+- Tempat lain sudah dicek: karyawan hanya membaca cabang penempatan, cabang backup, dan cabang di baris
+  absennya sendiri. SPV hanya membaca cabang-cabangnya. Semua masih diizinkan RLS.
+
 ## 2026-10-22 — Build EAS: login username + backup / SPV banyak cabang
 
 - Dari commit `521ec0c`, kedua build **berhasil**:
