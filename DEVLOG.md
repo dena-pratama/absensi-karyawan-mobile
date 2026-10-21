@@ -2,6 +2,18 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-21 — Login dengan username (sama dengan panel web)
+
+- `src/shared/login-id.ts` disalin dari repo web (`src/lib/login-id.ts`). Username "budi01" diubah jadi
+  email internal `budi01@akun.denaprojects.web.id` sebelum login (Supabase hanya mengenal email).
+  **Domain harus sama persis dengan web**; kalau berubah, akun lama tidak bisa login.
+- Layar login: kolom **Username / Email** (keyboard teks biasa, tanpa huruf besar otomatis / koreksi),
+  kata sandi minimal 6 karakter (`PASSWORD_MIN`). Format username tidak valid atau sandi < 6 karakter
+  langsung ditolak dengan "Username / email atau kata sandi salah.", tanpa memanggil server.
+  Admin tetap bisa login dengan email asli.
+- Profil & layar SPV menampilkan username (`displayLogin`), bukan email internal.
+- Dicek di pratinjau web: kolom & pesan error baru tampil. Butuh build EAS baru supaya APK ikut berubah.
+
 ## 2026-10-21 — Build preview Android (APK untuk dibagikan)
 
 - Build `preview` `0982e7b4-f8c0-4301-bd26-9a0aeac810bf` **berhasil**. APK mode rilis, tersambung ke database Supabase asli.

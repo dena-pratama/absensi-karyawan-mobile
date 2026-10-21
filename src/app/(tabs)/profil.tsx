@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { useEmployee, type EmployeeProfile } from "@/lib/employee";
 import { appColors as c, colors, fonts } from "@/lib/theme";
 import { formatDateLong } from "@/shared/format";
+import { displayLogin } from "@/shared/login-id";
 
 const CONTRACT_LABEL: Record<EmployeeProfile["contract_type"], string> = {
   tetap: "Karyawan Tetap",
@@ -71,7 +72,11 @@ export default function Profil() {
 
           <Card>
             <CardTitle icon={{ android: "info", ios: "info.circle" }} label="Data Karyawan" />
-            <InfoRow icon={{ android: "mail", ios: "envelope" }} label="Email login" value={session?.user.email ?? "-"} />
+            <InfoRow
+              icon={{ android: "person", ios: "person" }}
+              label="Username login"
+              value={session?.user.email ? displayLogin(session.user.email) : "-"}
+            />
             <InfoRow
               icon={{ android: "warehouse", ios: "building.2" }}
               label="Cabang penempatan"

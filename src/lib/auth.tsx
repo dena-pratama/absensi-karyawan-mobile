@@ -15,7 +15,7 @@ type AuthState = {
   role: AppRole | null;
   /** Pesan kalau role gagal dibaca (mis. tidak ada internet). */
   roleError: string | null;
-  /** Mengembalikan pesan error (Bahasa Indonesia) atau null kalau berhasil. */
+  /** `email` = hasil toLoginEmail() (username sudah diubah jadi email internal). Mengembalikan pesan error (Bahasa Indonesia) atau null kalau berhasil. */
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   reloadRole: () => Promise<void>;
@@ -33,9 +33,9 @@ function isNetworkError(message: string) {
 function signInErrorMessage(error: AuthError): string {
   switch (error.code) {
     case "invalid_credentials":
-      return "Email atau kata sandi salah.";
+      return "Username / email atau kata sandi salah.";
     case "email_not_confirmed":
-      return "Email akun ini belum dikonfirmasi. Hubungi admin.";
+      return "Akun ini belum dikonfirmasi. Hubungi admin.";
     case "user_banned":
       return "Akun ini sedang dinonaktifkan. Hubungi admin.";
     case "over_request_rate_limit":

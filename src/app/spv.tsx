@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { colors } from "@/lib/theme";
 import { formatDateLong, todayWIB } from "@/shared/format";
 import { APP_ROLE_LABEL } from "@/shared/labels";
+import { displayLogin } from "@/shared/login-id";
 
 type Profile = { name: string; detail: string | null };
 
@@ -20,7 +21,7 @@ export default function Spv() {
   const { session, role, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const userId = session?.user.id;
-  const email = session?.user.email ?? "";
+  const email = displayLogin(session?.user.email ?? "");
 
   useEffect(() => {
     if (!userId) return;

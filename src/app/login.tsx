@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/Icon";
 import { useAuth } from "@/lib/auth";
 import { appColors as c, colors, fonts } from "@/lib/theme";
+import { PASSWORD_MIN, toLoginEmail } from "@/shared/login-id";
 
 type FieldProps = TextInputProps & {
   label: string;
@@ -48,10 +49,10 @@ function Field({ label, icon, right, style, ref, ...input }: FieldProps) {
   );
 }
 
-/** Login email + kata sandi. Akun dibuat admin di panel web, jadi tidak ada daftar / lupa sandi. */
+/** Login username (atau email untuk admin) + kata sandi. Akun dibuat admin di panel web, jadi tidak ada daftar / lupa sandi. */
 export default function Login() {
   const { signIn } = useAuth();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,13 +60,19 @@ export default function Login() {
   const passwordRef = useRef<TextInputInstance>(null);
 
   async function submit() {
-    if (!email.trim() || !password) {
-      setError("Isi email dan kata sandi terlebih dahulu.");
+    if (!identifier.trim() || !password) {
+      setError("Isi username / email dan kata sandi terlebih dahulu.");
+      return;
+    }
+    // Username "budi01" → email internal Supabase; format tidak valid / sandi terlalu pendek pasti salah.
+    const loginEmail = toLoginEmail(identifier);
+    if (!loginEmail || password.length < PASSWORD_MIN) {
+      setError("Username / email atau kata sandi salah.");
       return;
     }
     setError(null);
     setBusy(true);
-    const message = await signIn(email, password);
+    const message = await signIn(loginEmail, password);
     // Kalau berhasil, layar ini otomatis diganti; busy dibiarkan agar tombol tidak bisa ditekan lagi.
     if (message) {
       setError(message);
@@ -92,7 +99,6 @@ export default function Login() {
                   contentFit="contain"
                   accessibilityLabel="Logo Absensi Ekspedisi"
                 />
-
               </View>
               <View style={styles.logoDot} />
             </View>
@@ -102,15 +108,14 @@ export default function Login() {
 
           <View style={styles.card}>
             <Field
-              label="Email"
-              icon={{ android: "mail", ios: "envelope" }}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="nama@contoh.com"
+              label="Username / Email"
+              icon={{ android: "person", ios: "person" }}
+              value={identifier}
+              onChangeText={setIdentifier}
+              placeholder="mis. budi01"
               autoCapitalize="none"
               autoCorrect={false}
-              autoComplete="email"
-              keyboardType="email-address"
+              autoComplete="username"
               textContentType="username"
               returnKeyType="next"
               onSubmitEditing={() => passwordRef.current?.focus()}
