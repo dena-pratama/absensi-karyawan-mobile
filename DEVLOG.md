@@ -2,6 +2,12 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-22 — Build EAS: login username + backup / SPV banyak cabang
+
+- Dari commit `521ec0c`, kedua build **berhasil**:
+  - development `a74ffc2a-9162-4483-be0e-efedd28db5a3`: ±142 MB (sebelumnya ±267 MB; x86 sudah dibuang);
+  - preview `ab47e9b7-4a80-45ba-85da-b29fa7acdef6`: ±64 MB.
+
 ## 2026-10-22 — Backup karyawan antar cabang + SPV banyak cabang
 
 Butuh migrasi repo web `supabase/migrations/20261022000000_backup_and_multi_branch_spv.sql`.
