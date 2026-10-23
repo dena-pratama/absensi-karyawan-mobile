@@ -9,7 +9,9 @@ Catatan aktivitas penting. Entri terbaru di atas.
 - Tab SPV kini: **Absen · Riwayat · Kasbon · Backup · Profil**. Absen jadi layar pertama (`spv/index.tsx`).
 - Kode ceklis dihapus: `fetchDayRoster`, `saveChecklist`, pemilih cabang `BranchChips`, pilihan cabang di
   `SpvProvider`. Daftar cabang SPV tetap dipakai pemilih outlet absen & tab Backup.
-- Belum ada build EAS dengan perubahan ini.
+- Build EAS dari commit `00e4261`, keduanya **berhasil**:
+  - development `ba9af831-04ba-4820-b826-1609a9e52019`: ±142 MB;
+  - preview `0b118857-fc23-4214-a8de-041226c8f97d`: ±64 MB.
 
 ## 2026-10-25 — Update paket Expo + build EAS (SPV absen, kasbon, mode terang)
 
