@@ -2,6 +2,15 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-25 — Update paket Expo + build EAS (SPV absen, kasbon, mode terang)
+
+- `npx expo install --fix`: 8 paket SDK 58 naik ke versi patch terbaru (expo, expo-router, expo-camera,
+  expo-splash-screen, expo-status-bar, expo-linking, @expo/ui, dll.). `expo-status-bar` masuk daftar plugin.
+  Lock file dibuat ulang dengan npm 10. `expo-doctor` 20/20.
+- Dari commit `693e5e1`, kedua build **berhasil**:
+  - development `e783203d-f726-43d2-9c3e-1b0875442619`: ±142 MB;
+  - preview `734ec869-ada8-484f-9516-496ac6cc00c7`: ±64 MB.
+
 ## 2026-10-25 — Mode terang (light mode)
 
 - Pilihan **Tampilan** di Profil (karyawan & SPV): Otomatis (ikut tema HP) / Terang / Gelap. Pilihan
