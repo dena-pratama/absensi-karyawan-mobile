@@ -1,12 +1,10 @@
-// Data untuk akun SPV: cabang yang dipegang (boleh > 1), roster harian (termasuk karyawan backup),
-// ceklis absensi, dan penugasan backup. Absen SPV sendiri ada di CheckScreen (pilih outlet).
-// Logika roster mengikuti panel web (absensi-karyawan/src/lib/data/backup.ts → getDayRoster).
+// Data untuk akun SPV: cabang yang dipegang (boleh > 1) dan penugasan backup karyawan.
+// Absen SPV sendiri ada di CheckScreen (pilih outlet). Ceklis absensi cabang hanya lewat panel web.
 
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";
 
-import type { AttendanceStatus } from "@/shared/labels";
 import { useAuth } from "./auth";
-import { BRANCH_COLUMNS, fetchBackups, isMissingSchema } from "./backup";
+import { BRANCH_COLUMNS, isMissingSchema } from "./backup";
 import type { BranchInfo } from "./employee";
 import { supabase } from "./supabase";
 
@@ -18,9 +16,6 @@ type SpvState = {
   loading: boolean;
   error: string | null;
   branches: BranchInfo[];
-  /** Cabang yang sedang dipilih di pemilih cabang. */
-  branchId: string | null;
-  setBranchId: (id: string) => void;
   refresh: () => Promise<void>;
 };
 
@@ -58,7 +53,6 @@ export function SpvProvider({ children }: { children: ReactNode }) {
     error: null,
     branches: [],
   });
-  const [picked, setPicked] = useState<string | null>(null);
 
   const load = useCallback(async (uid: string) => {
     try {
@@ -84,11 +78,9 @@ export function SpvProvider({ children }: { children: ReactNode }) {
     if (userId) setState(await load(userId));
   }, [userId, load]);
 
-  // Pilihan cabang tetap selama masih ada di daftar; kalau tidak, pakai cabang pertama.
-  const branchId = state.branches.some((b) => b.id === picked) ? picked : (state.branches[0]?.id ?? null);
 
   return (
-    <SpvContext value={{ ...state, branchId, setBranchId: setPicked, refresh }}>{children}</SpvContext>
+    <SpvContext value={{ ...state, refresh }}>{children}</SpvContext>
   );
 }
 
@@ -99,27 +91,8 @@ export function useSpv(): SpvState {
 }
 
 // ---------------------------------------------------------------------------
-// Roster harian + ceklis
+// Karyawan per cabang (pilihan karyawan backup)
 // ---------------------------------------------------------------------------
-
-export type RosterEntry = {
-  employeeId: string;
-  nik: string;
-  name: string;
-  roleId: string;
-  roleName: string;
-  /** in = karyawan cabang lain yang di-backup ke sini; out = karyawan cabang ini yang sedang backup di cabang lain. */
-  backup: { kind: "in" | "out"; branchCode: string; branchName: string } | null;
-};
-
-export type DayAttendance = {
-  employeeId: string;
-  branchId: string;
-  status: AttendanceStatus;
-  note: string | null;
-  checkInAt: string | null;
-  checkOutAt: string | null;
-};
 
 type AssignmentRow = {
   employee_id: string;
@@ -142,7 +115,7 @@ async function queryRoster(by: { branchId: string } | { employeeIds: string[] },
   if (error) throw error;
 
   const seen = new Set<string>();
-  const roster: Omit<RosterEntry, "backup">[] = [];
+  const roster: { employeeId: string; nik: string; name: string; roleId: string; roleName: string }[] = [];
   for (const row of (data ?? []) as unknown as AssignmentRow[]) {
     if (!row.employee || seen.has(row.employee_id)) continue;
     seen.add(row.employee_id);
@@ -155,113 +128,6 @@ async function queryRoster(by: { branchId: string } | { employeeIds: string[] },
     });
   }
   return roster;
-}
-
-/** Roster satu cabang pada satu tanggal + absensinya. */
-export async function fetchDayRoster(branchId: string, date: string) {
-  const [home, names] = await Promise.all([queryRoster({ branchId }, date), fetchBranchNames()]);
-  const { rows: backups } = await fetchBackups({ since: date, until: date, names });
-  const out = new Map(backups.filter((b) => b.fromBranch?.id === branchId).map((b) => [b.employeeId, b]));
-  const incoming = backups.filter((b) => b.toBranch.id === branchId);
-  const homeIds = new Set(home.map((r) => r.employeeId));
-  const visiting =
-    incoming.length > 0 ? await queryRoster({ employeeIds: incoming.map((b) => b.employeeId) }, date) : [];
-
-  const roster: RosterEntry[] = [
-    ...home.map((r) => {
-      const b = out.get(r.employeeId);
-      return { ...r, backup: b ? { kind: "out" as const, branchCode: b.toBranch.code, branchName: b.toBranch.name } : null };
-    }),
-    ...visiting
-      .filter((r) => !homeIds.has(r.employeeId))
-      .map((r) => {
-        const b = incoming.find((x) => x.employeeId === r.employeeId);
-        return {
-          ...r,
-          backup: { kind: "in" as const, branchCode: b?.fromBranch?.code ?? "-", branchName: b?.fromBranch?.name ?? "-" },
-        };
-      }),
-  ].sort((a, b) => a.nik.localeCompare(b.nik));
-
-  const ids = roster.map((r) => r.employeeId);
-  let attendance: DayAttendance[] = [];
-  if (ids.length > 0) {
-    const { data, error } = await supabase
-      .from("attendance_daily")
-      .select("employee_id, branch_id, status, note, check_in_at, check_out_at")
-      .in("employee_id", ids)
-      .eq("attendance_date", date);
-    if (error) throw error;
-    attendance = (
-      (data ?? []) as {
-        employee_id: string;
-        branch_id: string;
-        status: AttendanceStatus;
-        note: string | null;
-        check_in_at: string | null;
-        check_out_at: string | null;
-      }[]
-    ).map((r) => ({
-      employeeId: r.employee_id,
-      branchId: r.branch_id,
-      status: r.status,
-      note: r.note,
-      checkInAt: r.check_in_at,
-      checkOutAt: r.check_out_at,
-    }));
-  }
-  return { roster, attendance };
-}
-
-/**
- * Simpan ceklis (status per karyawan) untuk satu cabang & tanggal — seperti saveAttendance di web.
- * Karyawan yang sedang backup keluar tidak boleh diisi di sini. Kolom check-in/out tidak disentuh.
- */
-export async function saveChecklist(
-  branchId: string,
-  date: string,
-  roster: RosterEntry[],
-  changes: { employeeId: string; status: AttendanceStatus }[],
-  userId: string,
-): Promise<string | null> {
-  const byId = new Map(roster.filter((r) => r.backup?.kind !== "out").map((r) => [r.employeeId, r]));
-  const rows = [];
-  for (const c of changes) {
-    const emp = byId.get(c.employeeId);
-    if (!emp) return "Ada karyawan yang tidak terdaftar di cabang ini pada tanggal tersebut.";
-    rows.push({
-      attendance_date: date,
-      employee_id: c.employeeId,
-      branch_id: branchId,
-      job_role_id: emp.roleId,
-      status: c.status,
-      updated_by: userId,
-    });
-  }
-  if (rows.length === 0) return null;
-
-  const { data: existing, error: existingError } = await supabase
-    .from("attendance_daily")
-    .select("employee_id")
-    .eq("attendance_date", date)
-    .in(
-      "employee_id",
-      rows.map((r) => r.employee_id),
-    );
-  if (existingError) return "Gagal membaca data absensi. Coba lagi.";
-  const existingIds = new Set((existing ?? []).map((e) => e.employee_id as string));
-  const toInsert = rows.filter((r) => !existingIds.has(r.employee_id)).map((r) => ({ ...r, created_by: userId }));
-  const toUpdate = rows.filter((r) => existingIds.has(r.employee_id));
-
-  if (toInsert.length) {
-    const { error } = await supabase.from("attendance_daily").insert(toInsert);
-    if (error) return "Gagal menyimpan absensi baru. Coba lagi.";
-  }
-  if (toUpdate.length) {
-    const { error } = await supabase.from("attendance_daily").upsert(toUpdate, { onConflict: "employee_id,attendance_date" });
-    if (error) return "Gagal memperbarui absensi. Coba lagi.";
-  }
-  return null;
 }
 
 // ---------------------------------------------------------------------------

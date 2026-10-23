@@ -2,6 +2,15 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-25 — Ceklis Absensi dihapus dari app SPV
+
+- Keputusan user: Ceklis Absensi tidak dipakai di app (tidak bisa diisi SPV). Ceklis & monitoring cabang
+  hanya lewat panel web.
+- Tab SPV kini: **Absen · Riwayat · Kasbon · Backup · Profil**. Absen jadi layar pertama (`spv/index.tsx`).
+- Kode ceklis dihapus: `fetchDayRoster`, `saveChecklist`, pemilih cabang `BranchChips`, pilihan cabang di
+  `SpvProvider`. Daftar cabang SPV tetap dipakai pemilih outlet absen & tab Backup.
+- Belum ada build EAS dengan perubahan ini.
+
 ## 2026-10-25 — Update paket Expo + build EAS (SPV absen, kasbon, mode terang)
 
 - `npx expo install --fix`: 8 paket SDK 58 naik ke versi patch terbaru (expo, expo-router, expo-camera,

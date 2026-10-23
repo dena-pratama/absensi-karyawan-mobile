@@ -65,7 +65,7 @@ export default function SpvProfil() {
         tone="muted"
         icon={{ android: "info", ios: "info.circle" }}
         title="Absen SPV"
-        message="Absen lewat tab Absen: pilih outlet dari cabang Anda, lalu GPS + selfie. Check out boleh di outlet lain. Daftar cabang, data karyawan untuk absen, dan kata sandi diatur admin di panel web."
+        message="Absen lewat tab Absen: pilih outlet dari cabang Anda, lalu GPS + selfie. Check out boleh di outlet lain. Ceklis & monitoring absensi cabang dilakukan lewat panel web."
       />
 
       <ThemeSetting />

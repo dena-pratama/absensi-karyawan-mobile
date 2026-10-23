@@ -1,46 +1,13 @@
-// Pemilih sederhana tanpa library tambahan: chip cabang, langkah tanggal, dan daftar pilihan (modal).
+// Pemilih sederhana tanpa library tambahan: langkah tanggal dan daftar pilihan (modal).
 
 import { useState } from "react";
-import { FlatList, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { FlatList, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatDateLong } from "@/shared/format";
 import { Icon } from "./Icon";
 import { kit } from "./kit";
-
-/** Pilihan cabang berbentuk chip yang bisa digeser (untuk SPV yang memegang beberapa cabang). */
-export function BranchChips({
-  branches,
-  value,
-  onChange,
-}: {
-  branches: { id: string; code: string; name: string }[];
-  value: string | null;
-  onChange: (id: string) => void;
-}) {
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-      {branches.map((b) => {
-        const active = b.id === value;
-        return (
-          <Pressable
-            key={b.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            onPress={() => onChange(b.id)}
-            style={[styles.chip, active && styles.chipActive]}
-          >
-            <Text style={[styles.chipCode, active && { color: c.onPrimary }]}>{b.code}</Text>
-            <Text style={[styles.chipName, active && { color: c.onPrimary }]} numberOfLines={1}>
-              {b.name}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
-}
 
 /** Tambah / kurang hari pada tanggal YYYY-MM-DD (UTC, aman dari zona waktu). */
 export function addDays(ymd: string, days: number): string {
@@ -196,12 +163,6 @@ export function SelectField({
 }
 
 const styles = themedStyles(() => ({
-  chips: { gap: 8, paddingVertical: 2 },
-  chip: { backgroundColor: c.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, maxWidth: 200 },
-  chipActive: { backgroundColor: colors.brand },
-  chipCode: { color: c.onSurface, fontFamily: fonts.bold, fontSize: 13 },
-  chipName: { color: c.onSurfaceVariant, fontFamily: fonts.regular, fontSize: 11 },
-
   stepper: {
     flexDirection: "row",
     alignItems: "center",
