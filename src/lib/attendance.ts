@@ -1,6 +1,6 @@
 // Data absensi karyawan: kirim check-in/out (GPS + selfie) dan baca riwayat.
 // Aturan absen (radius cabang, jam server, tolak fake GPS) dijaga fungsi attendance_check
-// di database — lihat migrasi attendance_check_in_out di repo web.
+// di database. Lihat migrasi attendance_check_in_out & spv_attendance di repo web.
 
 import { File } from "expo-file-system";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
@@ -25,12 +25,36 @@ export type AttendanceRow = {
   check_in_distance_m: number | null;
   check_out_at: string | null;
   check_out_distance_m: number | null;
-  /** Cabang tempat absen dicatat (bisa cabang backup). */
+  /** Cabang tempat absen dicatat = outlet check in (bisa cabang backup). */
   branch: BranchInfo | null;
+  /** Outlet tempat check out (SPV boleh pulang di outlet lain); null = sama / belum pulang. */
+  check_out_branch?: { id: string; code: string; name: string } | null;
 };
 
-export const ATTENDANCE_COLUMNS =
+const BASE_COLUMNS =
   "id, attendance_date, status, note, check_in_at, check_in_distance_m, check_out_at, check_out_distance_m, branch:branch_id(id, code, name, latitude, longitude, geofence_radius_m)";
+const FULL_COLUMNS = `${BASE_COLUMNS}, check_out_branch:check_out_branch_id(id, code, name)`;
+
+/** false setelah server menolak kolom check_out_branch_id (migrasi spv_attendance belum dijalankan). */
+let hasCheckOutBranch = true;
+
+/**
+ * Jalankan query attendance_daily dengan kolom lengkap; kalau kolom outlet check out belum ada
+ * di database, ulangi tanpa kolom itu supaya app tetap jalan sebelum migrasi.
+ */
+export async function selectAttendance<T>(
+  run: (columns: string) => PromiseLike<{ data: T | null; error: { code?: string } | null }>,
+): Promise<T | null> {
+  if (hasCheckOutBranch) {
+    const { data, error } = await run(FULL_COLUMNS);
+    if (!error) return data;
+    if (!["42703", "PGRST200", "PGRST100"].includes(error.code ?? "")) throw error;
+    hasCheckOutBranch = false;
+  }
+  const { data, error } = await run(BASE_COLUMNS);
+  if (error) throw error;
+  return data;
+}
 
 function friendlyError(error: { code?: string; message: string }): string {
   // Pesan dari fungsi attendance_check sudah berbahasa Indonesia.
@@ -54,11 +78,13 @@ async function compressSelfie(uri: string): Promise<ArrayBuffer> {
   return new File(saved.uri).arrayBuffer();
 }
 
+/** `branchId` = outlet pilihan (SPV); kosong = server memilih cabang terdekat yang diizinkan. */
 export async function submitAttendance(
   kind: CheckKind,
   employeeId: string,
   fix: GpsFix,
   photoUri: string,
+  branchId?: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
     const body = await compressSelfie(photoUri);
@@ -82,6 +108,8 @@ export async function submitAttendance(
       p_accuracy_m: fix.accuracy,
       p_photo: path,
       p_mocked: fix.mocked,
+      // Hanya dikirim bila ada, supaya tetap cocok dengan versi fungsi lama (6 parameter).
+      ...(branchId ? { p_branch: branchId } : {}),
     });
     if (error) return { ok: false, message: friendlyError(error) };
     return { ok: true };
@@ -94,14 +122,15 @@ export async function submitAttendance(
 export async function fetchMonth(employeeId: string, year: number, month: number) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  const { data, error } = await supabase
-    .from("attendance_daily")
-    .select(ATTENDANCE_COLUMNS)
-    .eq("employee_id", employeeId)
-    .gte("attendance_date", `${year}-${pad(month)}-01`)
-    .lte("attendance_date", `${year}-${pad(month)}-${pad(last)}`)
-    .order("attendance_date", { ascending: false });
-  if (error) throw error;
+  const data = await selectAttendance((columns) =>
+    supabase
+      .from("attendance_daily")
+      .select(columns)
+      .eq("employee_id", employeeId)
+      .gte("attendance_date", `${year}-${pad(month)}-01`)
+      .lte("attendance_date", `${year}-${pad(month)}-${pad(last)}`)
+      .order("attendance_date", { ascending: false }),
+  );
   return (data ?? []) as unknown as AttendanceRow[];
 }
 

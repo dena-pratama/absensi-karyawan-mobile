@@ -1,5 +1,5 @@
 // Data untuk akun SPV: cabang yang dipegang (boleh > 1), roster harian (termasuk karyawan backup),
-// ceklis absensi, dan penugasan backup. SPV tidak absen sendiri.
+// ceklis absensi, dan penugasan backup. Absen SPV sendiri ada di CheckScreen (pilih outlet).
 // Logika roster mengikuti panel web (absensi-karyawan/src/lib/data/backup.ts → getDayRoster).
 
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";

@@ -1,12 +1,13 @@
-// Layar Check In / Check Out: sapaan + jam, cek lokasi GPS, foto selfie, lalu kirim.
+// Layar Check In / Check Out (karyawan) dan Absen (SPV, dengan pilihan outlet):
+// sapaan + jam, cek lokasi GPS, foto selfie, lalu kirim.
 
 import { useFocusEffect, useIsFocused } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { submitAttendance, type CheckKind } from "@/lib/attendance";
+import { submitAttendance, type AttendanceRow, type CheckKind } from "@/lib/attendance";
 import { formatRange } from "@/lib/backup";
-import { useEmployee, type BranchInfo, type EmployeeProfile } from "@/lib/employee";
+import { NOT_LINKED_KARYAWAN, NOT_LINKED_SPV, useEmployee, type BranchInfo, type EmployeeProfile } from "@/lib/employee";
 import { locate, type GpsState } from "@/lib/location";
 import { appColors as c, colors, fonts } from "@/lib/theme";
 import { formatTimeWIB } from "@/shared/format";
@@ -14,6 +15,7 @@ import { ATTENDANCE_LABEL } from "@/shared/labels";
 import { Icon } from "../Icon";
 import { ActionButton, Avatar, Card, kit, LiveClock, LoadingCard, Notice, Pill, TabScreen, type Tone } from "../kit";
 import { evaluateGps, GpsCard } from "./GpsCard";
+import { OutletPicker, rankOutlets } from "./OutletPicker";
 import { SelfieCard } from "./SelfieCard";
 
 const TEXT: Record<CheckKind, { title: string; submit: string; done: string }> = {
@@ -21,14 +23,22 @@ const TEXT: Record<CheckKind, { title: string; submit: string; done: string }> =
   out: { title: "Check Out", submit: "Kirim Absen Pulang (Check-Out)", done: "Absen pulang tercatat" },
 };
 
-function GreetingCard({ profile, status }: { profile: EmployeeProfile; status: { tone: Tone; label: string } }) {
+function GreetingCard({
+  profile,
+  status,
+  isSpv,
+}: {
+  profile: EmployeeProfile;
+  status: { tone: Tone; label: string };
+  isSpv: boolean;
+}) {
   return (
     <Card>
       <View style={styles.greetRow}>
         <Avatar name={profile.full_name} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={styles.greetCaption} numberOfLines={1}>
-            KARYAWAN • {profile.nik}
+            {isSpv ? "SPV" : "KARYAWAN"} • {profile.nik}
           </Text>
           <Text style={styles.greetName} numberOfLines={1}>
             Halo, {profile.full_name}
@@ -58,7 +68,26 @@ function GpsHeaderPill({ gps }: { gps: GpsState | null }) {
   );
 }
 
-export function CheckScreen({ kind }: { kind: CheckKind }) {
+/** "Masuk pukul 07:45 WIB di JKT109A." (+ outlet pulang bila berbeda). */
+function doneMessage(kind: CheckKind, today: AttendanceRow, checkedOut: boolean) {
+  const inAt = `Masuk pukul ${formatTimeWIB(today.check_in_at!)}${today.branch ? ` di ${today.branch.code}` : ""}`;
+  if (kind === "in") return `${inAt}.${checkedOut ? "" : " Jangan lupa check out saat pulang."}`;
+  const outBranch = today.check_out_branch ?? today.branch;
+  return `${inAt}, pulang pukul ${formatTimeWIB(today.check_out_at!)}${outBranch ? ` di ${outBranch.code}` : ""}.`;
+}
+
+/** Gabungkan daftar cabang tanpa duplikat (urutan pertama dipertahankan). */
+function uniqueBranches(list: (BranchInfo | null | undefined)[]): BranchInfo[] {
+  const seen = new Set<string>();
+  return list.filter((b): b is BranchInfo => !!b && !seen.has(b.id) && !!seen.add(b.id));
+}
+
+/**
+ * `kind` kosong = satu layar Absen (masuk dulu, lalu pulang).
+ * `outlets` diisi untuk SPV: SPV memilih outlet tempat absen dari cabang-cabangnya, dan boleh
+ * check out di outlet lain. Server (attendance_check dengan p_branch) mengecek ulang.
+ */
+export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; outlets?: BranchInfo[] }) {
   const { loading, error, profile, today, refresh } = useEmployee();
   const focused = useIsFocused();
   const [gps, setGps] = useState<GpsState | null>(null);
@@ -66,10 +95,15 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [pickedOutlet, setPickedOutlet] = useState<string | null>(null);
+  const isSpv = outlets !== undefined;
+  const notLinked = error === NOT_LINKED_SPV || error === NOT_LINKED_KARYAWAN;
 
   // Kondisi absen hari ini
   const checkedIn = !!today?.check_in_at;
   const checkedOut = !!today?.check_out_at;
+  const kind: CheckKind = fixedKind ?? (checkedIn ? "out" : "in");
+  const title = fixedKind ? TEXT[kind].title : "Absen";
   const markedAbsent = today !== null && today.status !== "hadir";
   const done = kind === "in" ? checkedIn : checkedOut;
   const blocked = markedAbsent || (kind === "out" && !checkedIn);
@@ -96,11 +130,16 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
 
   if (!profile) {
     return (
-      <TabScreen title={TEXT[kind].title} refreshing={refreshing} onRefresh={onRefresh}>
+      <TabScreen title={title} refreshing={refreshing} onRefresh={onRefresh}>
         {loading ? (
           <LoadingCard />
         ) : (
-          <Notice tone="danger" icon={{ android: "error", ios: "exclamationmark.circle" }} title="Data belum bisa dimuat" message={error ?? undefined}>
+          <Notice
+            tone={notLinked ? "warning" : "danger"}
+            icon={notLinked ? { android: "link_off", ios: "link" } : { android: "error", ios: "exclamationmark.circle" }}
+            title={notLinked ? "Belum bisa absen" : "Data belum bisa dimuat"}
+            message={error ?? undefined}
+          >
             <View style={{ marginTop: 8 }}>
               <ActionButton label="Coba lagi" variant="secondary" onPress={onRefresh} />
             </View>
@@ -118,11 +157,22 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
         ? { tone: "info", label: "Sudah masuk • belum pulang" }
         : { tone: "muted", label: "Belum absen" };
 
-  // Cabang yang boleh dipakai (sama dengan server): sudah ada baris absen hari ini → cabang baris itu;
-  // belum ada → cabang backup hari ini dan cabang penempatan (dipilih yang terdekat).
-  const candidates: BranchInfo[] = today?.branch
+  // Cabang yang boleh dipakai (sama dengan server):
+  //   karyawan: sudah ada baris hari ini → cabang baris itu; belum → cabang backup & penempatan (terdekat);
+  //   SPV: masuk → outlet pilihan dari cabangnya (+ penempatan/backup), atau cabang baris yang sudah
+  //        diisi ceklis; pulang → outlet mana pun miliknya.
+  const autoCandidates = today?.branch
     ? [today.branch]
-    : [profile.backupToday?.toBranch, profile.branch].filter((b): b is BranchInfo => !!b);
+    : uniqueBranches([profile.backupToday?.toBranch, profile.branch]);
+  const outletOptions = !isSpv
+    ? []
+    : kind === "in" && today?.branch
+      ? [today.branch]
+      : uniqueBranches([...outlets, profile.branch, profile.backupToday?.toBranch, kind === "out" ? today?.branch : null]);
+  const ranked = rankOutlets(outletOptions, gps);
+  // Pilihan pengguna dipakai selama masih ada di daftar; kalau belum memilih → outlet terdekat.
+  const outletId = ranked.some((r) => r.branch.id === pickedOutlet) ? pickedOutlet : (ranked[0]?.branch.id ?? null);
+  const candidates = isSpv ? ranked.filter((r) => r.branch.id === outletId).map((r) => r.branch) : autoCandidates;
   const gpsCheck = evaluateGps(candidates, gps ?? { status: "locating" });
   const backup = profile.backupToday;
   const ready = gpsCheck.ok && !!photoUri && !submitting;
@@ -132,7 +182,7 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
     if (!profile || gps?.status !== "ok" || !photoUri) return;
     setSubmitting(true);
     setSubmitError(null);
-    const result = await submitAttendance(kind, profile.id, gps.fix, photoUri);
+    const result = await submitAttendance(kind, profile.id, gps.fix, photoUri, isSpv ? (outletId ?? undefined) : undefined);
     if (result.ok) {
       setPhotoUri(null);
       await refresh();
@@ -143,8 +193,8 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
   }
 
   return (
-    <TabScreen title={TEXT[kind].title} right={canCapture ? <GpsHeaderPill gps={gps} /> : null} refreshing={refreshing} onRefresh={onRefresh}>
-      <GreetingCard profile={profile} status={status} />
+    <TabScreen title={title} right={canCapture ? <GpsHeaderPill gps={gps} /> : null} refreshing={refreshing} onRefresh={onRefresh}>
+      <GreetingCard profile={profile} status={status} isSpv={isSpv} />
 
       {backup && (
         <Notice
@@ -160,9 +210,7 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
           tone="success"
           icon={{ android: "task_alt", ios: "checkmark.circle.fill" }}
           title={TEXT[kind].done}
-          message={`${kind === "in" ? "Masuk" : "Pulang"} pukul ${formatTimeWIB((kind === "in" ? today.check_in_at : today.check_out_at)!)}${
-            kind === "in" && !checkedOut ? ". Jangan lupa Check Out saat pulang." : "."
-          }`}
+          message={doneMessage(kind, today, checkedOut)}
         />
       )}
 
@@ -186,6 +234,15 @@ export function CheckScreen({ kind }: { kind: CheckKind }) {
 
       {canCapture && (
         <>
+          {isSpv && (
+            <OutletPicker
+              title={kind === "in" ? "Outlet check in" : "Outlet check out"}
+              ranked={ranked}
+              value={outletId}
+              onChange={setPickedOutlet}
+              disabled={submitting}
+            />
+          )}
           <GpsCard gps={gps ?? { status: "locating" }} check={gpsCheck} onRefresh={updateLocation} />
           <SelfieCard
             active={focused}

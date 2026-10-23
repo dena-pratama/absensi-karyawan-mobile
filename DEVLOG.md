@@ -2,6 +2,25 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-24 — SPV ikut absen (pilih outlet)
+
+Keputusan user berubah: SPV sekarang **ikut absen** lewat app (GPS + selfie) dan memilih outlet. Pasangan
+migrasi web `20261024000000_spv_attendance.sql`, yang belum dijalankan saat ditulis.
+- Admin menghubungkan akun SPV ke data karyawannya di web (Pengguna & Akses → "Absen sebagai").
+  Belum terhubung → tab Absen menampilkan "Akun SPV belum terhubung ke data karyawan, hubungi admin"
+  tanpa tombol absen.
+- Tab SPV kini: **Ceklis · Absen · Riwayat · Backup · Profil**.
+  - **Absen** (`CheckScreen` dengan `outlets`): satu layar, check in dulu lalu check out.
+  - **Pemilih outlet**: cabang-cabang SPV, ditambah penempatan & backup data karyawannya, diurutkan dari yang
+    terdekat, dengan jarak dan status dalam/luar area. Outlet terdekat terpilih otomatis dan bisa diganti.
+  - Outlet terpilih dikirim sebagai `p_branch` ke `attendance_check`.
+  - Check out boleh di outlet lain. Kalau baris hari ini sudah diisi ceklis, check in mengikuti cabang baris itu.
+- Riwayat (`src/components/HistoryScreen.tsx`, dipakai karyawan & SPV) menampilkan outlet check out kalau
+  berbeda dari outlet check in. Kolom `check_out_branch_id` dibaca dengan cadangan: kalau kolomnya belum ada
+  (migrasi belum dijalankan), query diulang tanpa kolom itu.
+- Karyawan: tidak berubah (tanpa `p_branch`, server memilih cabang terdekat yang diizinkan).
+- Teks UI tidak memakai tanda pisah panjang (preferensi user). "—" di Riwayat diganti "Belum".
+
 ## 2026-10-22 — Fix keamanan: daftar cabang lewat backup_branch_options()
 
 Pasangan migrasi web `20261022010000_branch_visibility_fix.sql`. Migrasi itu menghapus policy

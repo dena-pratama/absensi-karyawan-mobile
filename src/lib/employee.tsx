@@ -1,10 +1,11 @@
 // Data karyawan yang sedang login (profil, cabang penempatan hari ini, backup) + absensi hari ini.
+// Dipakai juga oleh SPV yang dihubungkan admin ke data karyawannya (SPV ikut absen).
 // Dipakai bersama oleh tab Check In, Check Out, Riwayat, dan Profil.
 
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { todayWIB } from "@/shared/format";
-import { ATTENDANCE_COLUMNS, type AttendanceRow } from "./attendance";
+import { selectAttendance, type AttendanceRow } from "./attendance";
 import { BRANCH_COLUMNS, fetchBackups, type Backup } from "./backup";
 import { useAuth } from "./auth";
 import { supabase } from "./supabase";
@@ -90,31 +91,32 @@ async function loadEmployee(userId: string) {
     backups,
   };
 
-  const { data: todayRow, error: todayError } = await supabase
-    .from("attendance_daily")
-    .select(ATTENDANCE_COLUMNS)
-    .eq("employee_id", profile.id)
-    .eq("attendance_date", today)
-    .maybeSingle();
-  if (todayError) throw todayError;
+  const todayRow = await selectAttendance((columns) =>
+    supabase.from("attendance_daily").select(columns).eq("employee_id", profile.id).eq("attendance_date", today).maybeSingle(),
+  );
 
   return { profile, today: (todayRow as unknown as AttendanceRow | null) ?? null };
 }
 
+/** Pesan saat akun belum dihubungkan ke data karyawan (dipakai juga untuk menyembunyikan tombol absen). */
+export const NOT_LINKED_KARYAWAN = "Akun ini belum terhubung ke data karyawan. Hubungi admin.";
+export const NOT_LINKED_SPV =
+  "Akun SPV belum terhubung ke data karyawan, hubungi admin (Pengguna & Akses → Absen sebagai).";
+
 /** Seperti loadEmployee, tapi error diubah jadi pesan ramah (string). */
-async function loadEmployeeSafe(userId: string) {
+async function loadEmployeeSafe(userId: string, isSpv: boolean) {
   try {
     return await loadEmployee(userId);
   } catch (e) {
-    return e instanceof Error && e.message === "no-employee"
-      ? "Akun ini belum terhubung ke data karyawan. Hubungi admin."
-      : "Gagal memuat data. Periksa koneksi internet lalu coba lagi.";
+    if (e instanceof Error && e.message === "no-employee") return isSpv ? NOT_LINKED_SPV : NOT_LINKED_KARYAWAN;
+    return "Gagal memuat data. Periksa koneksi internet lalu coba lagi.";
   }
 }
 
 export function EmployeeProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   const userId = session?.user.id;
+  const isSpv = role === "spv";
   const [state, setState] = useState<Omit<EmployeeState, "refresh">>({
     loading: true,
     error: null,
@@ -131,19 +133,19 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    if (userId) apply(await loadEmployeeSafe(userId));
-  }, [userId, apply]);
+    if (userId) apply(await loadEmployeeSafe(userId, isSpv));
+  }, [userId, isSpv, apply]);
 
   useEffect(() => {
     if (!userId) return;
     let active = true;
-    loadEmployeeSafe(userId).then((result) => {
+    loadEmployeeSafe(userId, isSpv).then((result) => {
       if (active) apply(result);
     });
     return () => {
       active = false;
     };
-  }, [userId, apply]);
+  }, [userId, isSpv, apply]);
 
   return <EmployeeContext value={{ ...state, refresh }}>{children}</EmployeeContext>;
 }
