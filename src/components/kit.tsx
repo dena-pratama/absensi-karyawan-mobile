@@ -1,4 +1,4 @@
-// Komponen tampilan untuk layar tab (gaya desain Stitch: kartu gelap, aksen cyan).
+// Komponen tampilan untuk layar tab (gaya desain Stitch: kartu, aksen cyan; ikut tema terang/gelap).
 
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -6,7 +6,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -14,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatDateLong, todayWIB } from "@/shared/format";
 import { Icon, type IconName } from "./Icon";
 
@@ -80,17 +79,25 @@ export function CardTitle({ icon, label, right }: { icon: { android: IconName; i
 
 export type Tone = "success" | "warning" | "danger" | "info" | "muted";
 
-const TONE: Record<Tone, { fg: string; bg: string }> = {
-  success: { fg: c.success, bg: c.successBg },
-  warning: { fg: c.warning, bg: c.warningBg },
-  danger: { fg: c.absent, bg: c.absentBg },
-  info: { fg: colors.brand, bg: "rgba(0, 210, 255, 0.1)" },
-  muted: { fg: c.onSurfaceVariant, bg: c.cardHigh },
-};
+/** Warna per nada (dibaca saat render supaya ikut tema aktif). */
+function tone(t: Tone): { fg: string; bg: string } {
+  switch (t) {
+    case "success":
+      return { fg: c.success, bg: c.successBg };
+    case "warning":
+      return { fg: c.warning, bg: c.warningBg };
+    case "danger":
+      return { fg: c.absent, bg: c.absentBg };
+    case "info":
+      return { fg: colors.brand, bg: c.infoBg };
+    case "muted":
+      return { fg: c.onSurfaceVariant, bg: c.cardHigh };
+  }
+}
 
 /** Label status kecil dengan titik warna. */
-export function Pill({ tone, label }: { tone: Tone; label: string }) {
-  const t = TONE[tone];
+export function Pill({ tone: toneName, label }: { tone: Tone; label: string }) {
+  const t = tone(toneName);
   return (
     <View style={[styles.pill, { backgroundColor: t.bg }]}>
       <View style={[styles.pillDot, { backgroundColor: t.fg }]} />
@@ -103,7 +110,7 @@ export function Pill({ tone, label }: { tone: Tone; label: string }) {
 
 /** Kotak pesan berwarna (berhasil / peringatan / gagal). */
 export function Notice({
-  tone,
+  tone: toneName,
   icon,
   title,
   message,
@@ -115,7 +122,7 @@ export function Notice({
   message?: string;
   children?: ReactNode;
 }) {
-  const t = TONE[tone];
+  const t = tone(toneName);
   return (
     <View style={[styles.notice, { backgroundColor: t.bg }]}>
       <Icon {...icon} size={22} color={t.fg} />
@@ -239,15 +246,15 @@ export function LoadingCard({ label = "Memuat data…" }: { label?: string }) {
   );
 }
 
-export const kit = StyleSheet.create({
+export const kit = themedStyles(() => ({
   label: { color: c.onSurfaceVariant, fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
   body: { color: c.onSurface, fontFamily: fonts.regular, fontSize: 14, lineHeight: 20 },
   muted: { color: c.onSurfaceVariant, fontFamily: fonts.regular, fontSize: 12, lineHeight: 17 },
   strong: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
   mono: { color: c.onSurfaceVariant, fontFamily: fonts.medium, fontSize: 11, fontVariant: ["tabular-nums"] },
-});
+}));
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   screen: { flex: 1, backgroundColor: c.surface },
   scroll: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 16 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4 },
@@ -260,7 +267,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.04)",
+    borderColor: c.cardBorder,
   },
   cardTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   cardTitle: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
@@ -298,7 +305,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 16,
   },
-  buttonPrimary: { backgroundColor: colors.brand, boxShadow: "0 0 18px rgba(0, 210, 255, 0.35)" },
+  buttonPrimary: { backgroundColor: colors.brand, boxShadow: `0 0 18px ${c.glow}` },
   buttonSecondary: { backgroundColor: c.cardHigh },
   buttonDanger: { backgroundColor: c.absentBg, borderWidth: 1, borderColor: "rgba(244, 63, 94, 0.3)" },
   buttonDisabled: { opacity: 0.4, boxShadow: "none" },
@@ -315,4 +322,4 @@ const styles = StyleSheet.create({
   },
   chipText: { color: c.onSurface, fontFamily: fonts.medium, fontSize: 12 },
   muted: { color: c.onSurfaceVariant, fontFamily: fonts.regular, fontSize: 12 },
-});
+}));

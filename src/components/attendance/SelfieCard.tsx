@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from "react-native";
 
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { Icon } from "../Icon";
 import { ActionButton, Card, CardTitle, ChipButton, kit, Notice, Pill } from "../kit";
 
@@ -129,7 +129,7 @@ export function SelfieCard({
 
 const CORNER = 26;
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   frame: {
     width: "100%",
     aspectRatio: 3 / 4,
@@ -180,4 +180,4 @@ const styles = StyleSheet.create({
   overlayLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
   overlayText: { color: c.onSurface, fontFamily: fonts.medium, fontSize: 12 },
   error: { color: colors.danger, fontFamily: fonts.regular, fontSize: 12 },
-});
+}));

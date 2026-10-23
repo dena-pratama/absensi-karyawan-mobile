@@ -3,13 +3,13 @@
 
 import { useFocusEffect, useIsFocused } from "expo-router";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { submitAttendance, type AttendanceRow, type CheckKind } from "@/lib/attendance";
 import { formatRange } from "@/lib/backup";
 import { NOT_LINKED_KARYAWAN, NOT_LINKED_SPV, useEmployee, type BranchInfo, type EmployeeProfile } from "@/lib/employee";
 import { locate, type GpsState } from "@/lib/location";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatTimeWIB } from "@/shared/format";
 import { ATTENDANCE_LABEL } from "@/shared/labels";
 import { Icon } from "../Icon";
@@ -271,7 +271,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   greetRow: { flexDirection: "row", gap: 12, alignItems: "center" },
   greetCaption: { color: colors.brand, fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 0.5 },
   greetName: { color: c.onSurface, fontFamily: fonts.bold, fontSize: 18, lineHeight: 24 },
@@ -287,4 +287,4 @@ const styles = StyleSheet.create({
   gpsDot: { width: 8, height: 8, borderRadius: 4 },
   gpsPillText: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 11 },
   footnote: { flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
-});
+}));

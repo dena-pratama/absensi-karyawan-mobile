@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ActionButton, Card, ChipButton, kit, LoadingCard, Notice, Pill, TabScreen } from "@/components/kit";
@@ -15,7 +15,7 @@ import {
   type BranchOption,
   type EmployeeOption,
 } from "@/lib/spv";
-import { appColors as c, fonts } from "@/lib/theme";
+import { appColors as c, fonts, themedStyles } from "@/lib/theme";
 import { todayWIB } from "@/shared/format";
 
 /** Rentang backup maksimal 93 hari (date_to − date_from ≤ 92), sama dengan database. */
@@ -350,7 +350,7 @@ export default function SpvBackup() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   modal: { flex: 1, backgroundColor: c.surface },
   form: { padding: 16, gap: 16, paddingBottom: 40 },
   formHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
@@ -367,4 +367,4 @@ const styles = StyleSheet.create({
   },
   cardHead: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   cardActions: { flexDirection: "row", gap: 8, justifyContent: "flex-end" },
-});
+}));

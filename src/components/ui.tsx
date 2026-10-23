@@ -1,10 +1,10 @@
 // Komponen tampilan dasar yang dipakai banyak layar.
 
 import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "@/lib/theme";
+import { colors, themedStyles } from "@/lib/theme";
 
 /** Layar penuh dengan latar gelap, konten di tengah. */
 export function Screen({ children }: { children: ReactNode }) {
@@ -70,7 +70,7 @@ export function MessageScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   screen: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, justifyContent: "center", padding: 20 },
   panel: {
@@ -87,4 +87,4 @@ const styles = StyleSheet.create({
   title: { color: colors.text, fontSize: 20, fontWeight: "700" },
   message: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 8 },
   actions: { marginTop: 20, gap: 10 },
-});
+}));

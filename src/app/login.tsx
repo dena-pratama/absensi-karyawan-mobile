@@ -7,7 +7,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -18,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon, type IconName } from "@/components/Icon";
 import { useAuth } from "@/lib/auth";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { PASSWORD_MIN, toLoginEmail } from "@/shared/login-id";
 
 type FieldProps = TextInputProps & {
@@ -183,7 +182,7 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   screen: { flex: 1, backgroundColor: c.surface },
   scroll: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24, paddingVertical: 24, gap: 16 },
   topRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 },
@@ -198,7 +197,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
-    boxShadow: "0 12px 24px rgba(6, 14, 28, 0.8)",
+    boxShadow: `0 12px 24px ${c.shadow}`,
   },
   logoInner: {
     width: 40,
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     gap: 12,
-    boxShadow: "0 25px 50px rgba(11, 12, 16, 0.9)",
+    boxShadow: `0 25px 50px ${c.shadow}`,
   },
   field: { gap: 6 },
   label: { color: c.onSurfaceVariant, fontFamily: fonts.medium, fontSize: 12, lineHeight: 16 },
@@ -271,7 +270,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    boxShadow: "0 0 18px rgba(0, 210, 255, 0.35)",
+    boxShadow: `0 0 18px ${c.glow}`,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
   buttonText: { color: c.onPrimary, fontFamily: fonts.semibold, fontSize: 14 },
@@ -283,4 +282,4 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: "center",
   },
-});
+}));

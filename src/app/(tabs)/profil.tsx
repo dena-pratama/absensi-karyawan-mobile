@@ -1,13 +1,14 @@
 import Constants from "expo-constants";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { Icon, type IconName } from "@/components/Icon";
+import { ThemeSetting } from "@/components/ThemeSetting";
 import { ActionButton, Avatar, Card, CardTitle, kit, LoadingCard, Notice, TabScreen } from "@/components/kit";
 import { useAuth } from "@/lib/auth";
 import { formatRange } from "@/lib/backup";
 import { useEmployee, type EmployeeProfile } from "@/lib/employee";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatDateLong } from "@/shared/format";
 import { displayLogin } from "@/shared/login-id";
 
@@ -128,13 +129,15 @@ export default function Profil() {
         </Notice>
       )}
 
+      <ThemeSetting />
+
       <ActionButton label="Keluar Akun" variant="danger" icon={{ android: "logout", ios: "rectangle.portrait.and.arrow.right" }} onPress={onSignOut} loading={signingOut} />
       <Text style={[kit.muted, { textAlign: "center" }]}>Absensi Ekspedisi v{Constants.expoConfig?.version ?? "1.0.0"}</Text>
     </TabScreen>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   head: { flexDirection: "row", gap: 14, alignItems: "center" },
   name: { color: c.onSurface, fontFamily: fonts.bold, fontSize: 20, lineHeight: 26 },
   nik: {
@@ -151,4 +154,4 @@ const styles = StyleSheet.create({
   nikText: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 13, letterSpacing: 0.5 },
   infoRow: { flexDirection: "row", gap: 12, alignItems: "center" },
   infoIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: c.input, alignItems: "center", justifyContent: "center" },
-});
+}));

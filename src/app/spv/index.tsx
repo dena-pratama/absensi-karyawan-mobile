@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { ActionButton, Card, kit, LoadingCard, Notice, Pill, TabScreen, type Tone } from "@/components/kit";
 import { BranchChips, DateStepper } from "@/components/pickers";
 import { useAuth } from "@/lib/auth";
 import { fetchDayRoster, saveChecklist, useSpv, type DayAttendance, type RosterEntry } from "@/lib/spv";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatTimeWIB, todayWIB } from "@/shared/format";
 import { ATTENDANCE_LABEL, type AttendanceStatus } from "@/shared/labels";
 
@@ -15,11 +15,10 @@ const STATUSES: { value: AttendanceStatus; tone: Tone }[] = [
   { value: "tidak_hadir", tone: "danger" },
 ];
 
-const TONE_COLOR: Record<AttendanceStatus, string> = {
-  hadir: c.success,
-  sakit: c.warning,
-  tidak_hadir: c.absent,
-};
+/** Warna tombol status (dibaca saat render supaya ikut tema aktif). */
+function toneColor(s: AttendanceStatus): string {
+  return s === "hadir" ? c.success : s === "sakit" ? c.warning : c.absent;
+}
 
 type Day = { roster: RosterEntry[]; attendance: DayAttendance[] };
 
@@ -76,7 +75,7 @@ function RosterCard({
                 accessibilityState={{ selected: active }}
                 disabled={disabled}
                 onPress={() => onPick(s.value)}
-                style={[styles.segBtn, active && { backgroundColor: TONE_COLOR[s.value] }]}
+                style={[styles.segBtn, active && { backgroundColor: toneColor(s.value) }]}
               >
                 <Text style={[styles.segText, active && { color: c.surface }]}>{ATTENDANCE_LABEL[s.value]}</Text>
               </Pressable>
@@ -250,7 +249,7 @@ export default function SpvChecklist() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   rowHead: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   segment: { flexDirection: "row", gap: 6 },
   segBtn: {
@@ -263,4 +262,4 @@ const styles = StyleSheet.create({
   segText: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 12 },
   changed: { color: colors.brand, fontFamily: fonts.medium, fontSize: 11 },
   summary: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-});
+}));

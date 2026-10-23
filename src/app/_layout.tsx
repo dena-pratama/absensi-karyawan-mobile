@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { MessageScreen } from "@/components/ui";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { configError } from "@/lib/supabase";
-import { colors } from "@/lib/theme";
+import { colors, ThemeProvider, useTheme } from "@/lib/theme";
 
 // Splash tetap tampil sampai sesi login tersimpan selesai dibaca.
 SplashScreen.preventAutoHideAsync();
@@ -32,10 +32,12 @@ export default function RootLayout() {
     );
   }
 
+  // Tema di dalam AuthProvider: saat tema diganti, hanya tampilan yang dimuat ulang (sesi login tetap).
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <ThemeProvider>
+        <RootNavigator />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
@@ -43,9 +45,10 @@ export default function RootLayout() {
 /** Mengarahkan layar sesuai status login & role. */
 function RootNavigator() {
   const { initializing, session, role } = useAuth();
+  const { scheme, ready: themeReady } = useTheme();
   // Kalau font gagal dimuat (fontError), app tetap jalan dengan font bawaan HP.
   const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
-  const ready = !initializing && (fontsLoaded || fontError !== null);
+  const ready = !initializing && themeReady && (fontsLoaded || fontError !== null);
 
   useEffect(() => {
     if (ready) SplashScreen.hide();
@@ -55,22 +58,25 @@ function RootNavigator() {
 
   const signedIn = session !== null;
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-      <Stack.Protected guard={signedIn && role === "karyawan"}>
-        <Stack.Screen name="(tabs)" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn && role === "spv"}>
-        <Stack.Screen name="spv" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn && role === "admin"}>
-        <Stack.Screen name="admin" />
-      </Stack.Protected>
-      <Stack.Protected guard={signedIn && role === null}>
-        <Stack.Screen name="tanpa-akses" />
-      </Stack.Protected>
-      <Stack.Protected guard={!signedIn}>
-        <Stack.Screen name="login" />
-      </Stack.Protected>
-    </Stack>
+    <>
+      <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+        <Stack.Protected guard={signedIn && role === "karyawan"}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && role === "spv"}>
+          <Stack.Screen name="spv" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && role === "admin"}>
+          <Stack.Screen name="admin" />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && role === null}>
+          <Stack.Screen name="tanpa-akses" />
+        </Stack.Protected>
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen name="login" />
+        </Stack.Protected>
+      </Stack>
+    </>
   );
 }

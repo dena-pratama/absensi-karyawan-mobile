@@ -1,10 +1,10 @@
 // Pemilih sederhana tanpa library tambahan: chip cabang, langkah tanggal, dan daftar pilihan (modal).
 
 import { useState } from "react";
-import { FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatDateLong } from "@/shared/format";
 import { Icon } from "./Icon";
 import { kit } from "./kit";
@@ -195,7 +195,7 @@ export function SelectField({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   chips: { gap: 8, paddingVertical: 2 },
   chip: { backgroundColor: c.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, maxWidth: 200 },
   chipActive: { backgroundColor: colors.brand },
@@ -255,4 +255,4 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   optionActive: { borderWidth: 1, borderColor: colors.brand },
-});
+}));

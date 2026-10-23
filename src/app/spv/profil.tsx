@@ -1,12 +1,13 @@
 import Constants from "expo-constants";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import { Icon } from "@/components/Icon";
+import { ThemeSetting } from "@/components/ThemeSetting";
 import { ActionButton, Avatar, Card, CardTitle, kit, LoadingCard, Notice, TabScreen } from "@/components/kit";
 import { useAuth } from "@/lib/auth";
 import { useSpv } from "@/lib/spv";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { APP_ROLE_LABEL } from "@/shared/labels";
 import { displayLogin } from "@/shared/login-id";
 
@@ -67,6 +68,8 @@ export default function SpvProfil() {
         message="Absen lewat tab Absen: pilih outlet dari cabang Anda, lalu GPS + selfie. Check out boleh di outlet lain. Daftar cabang, data karyawan untuk absen, dan kata sandi diatur admin di panel web."
       />
 
+      <ThemeSetting />
+
       <ActionButton
         label="Keluar Akun"
         variant="danger"
@@ -82,7 +85,7 @@ export default function SpvProfil() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   head: { flexDirection: "row", gap: 14, alignItems: "center" },
   name: { color: c.onSurface, fontFamily: fonts.bold, fontSize: 20, lineHeight: 26 },
   role: {
@@ -97,4 +100,4 @@ const styles = StyleSheet.create({
   },
   roleText: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 13 },
   branch: { backgroundColor: c.input, borderRadius: 10, padding: 12, gap: 2 },
-});
+}));

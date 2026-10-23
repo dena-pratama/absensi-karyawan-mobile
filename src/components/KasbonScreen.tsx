@@ -2,7 +2,7 @@
 
 import { Image } from "expo-image";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -18,7 +18,7 @@ import {
   type Kasbon,
   type KasbonQuota,
 } from "@/lib/kasbon";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatDateLong, formatTimeWIB, todayWIB } from "@/shared/format";
 import { Icon } from "./Icon";
 import { ActionButton, Card, CardTitle, ChipButton, kit, LoadingCard, Notice, Pill, TabScreen } from "./kit";
@@ -328,7 +328,7 @@ export function KasbonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
   rowStrong: { color: colors.brand, fontFamily: fonts.bold, fontSize: 15 },
   big: { backgroundColor: c.input, borderRadius: 10, padding: 14, gap: 4 },
@@ -362,4 +362,4 @@ const styles = StyleSheet.create({
   proofBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.92)" },
   proofHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16 },
   proofTitle: { color: "#fff", fontFamily: fonts.semibold, fontSize: 16 },
-});
+}));

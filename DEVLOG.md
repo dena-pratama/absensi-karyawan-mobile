@@ -2,6 +2,21 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-25 — Mode terang (light mode)
+
+- Pilihan **Tampilan** di Profil (karyawan & SPV): Otomatis (ikut tema HP) / Terang / Gelap. Pilihan
+  disimpan di HP (AsyncStorage `theme-mode`). `app.json` → `userInterfaceStyle: "automatic"`, jadi berlaku
+  di build EAS baru; Expo Go mengikuti tema HP.
+- `src/lib/theme.tsx` (menggantikan `theme.ts`): palet gelap (seperti panel web) & terang. Di mode terang,
+  brand cyan dipakai lebih gelap (`#0891b2`) supaya teks tetap terbaca di latar putih.
+- Cara kerja: `colors` / `appColors` dan gaya dari `themedStyles(() => ({...}))` (pengganti
+  `StyleSheet.create`) selalu membaca tema aktif. Saat tema berganti, `ThemeProvider` memuat ulang tampilan
+  (key = tema). Sesi login tetap, tapi tab kembali ke tab awal dan data layar dimuat ulang.
+  **Komponen baru: pakai `themedStyles` dan jangan simpan warna di konstanta tingkat modul.**
+- Warna yang tadinya ditulis langsung (bayangan, cahaya tombol, garis kartu, latar info) dipindah ke palet.
+  Status bar ikut tema.
+- Dicek di pratinjau web: layar login di mode terang & gelap, termasuk berganti saat app terbuka.
+
 ## 2026-10-25 — Kasbon (pinjaman gaji)
 
 Pasangan migrasi web `20261025000000_kasbon.sql`, yang belum dijalankan saat ditulis. Sebelum migrasi,

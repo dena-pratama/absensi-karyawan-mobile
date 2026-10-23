@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import type { BranchInfo } from "@/lib/employee";
 import { distanceM, type GpsState } from "@/lib/location";
-import { appColors as c } from "@/lib/theme";
+import { appColors as c, themedStyles } from "@/lib/theme";
 import { Icon } from "../Icon";
 import { Card, CardTitle, ChipButton, kit, Notice, Pill, type Tone } from "../kit";
 
@@ -130,7 +130,7 @@ export function GpsCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   branch: {
     flexDirection: "row",
     alignItems: "center",
@@ -140,4 +140,4 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   actions: { flexDirection: "row", justifyContent: "flex-end" },
-});
+}));

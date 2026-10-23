@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { Icon } from "@/components/Icon";
 import { ActionButton, Card, CardTitle, kit, LoadingCard, Notice, Pill, TabScreen, type Tone } from "@/components/kit";
 import { fetchMonth, formatDuration, workedMinutes, type AttendanceRow } from "@/lib/attendance";
 import { useEmployee } from "@/lib/employee";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatDateLong, formatTimeWIB, todayWIB } from "@/shared/format";
 import { ATTENDANCE_LABEL } from "@/shared/labels";
 
@@ -213,7 +213,7 @@ export function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   monthBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -238,4 +238,4 @@ const styles = StyleSheet.create({
   timeCol: { flex: 1, gap: 4 },
   timeLabel: { flexDirection: "row", alignItems: "center", gap: 6 },
   time: { color: c.onSurface, fontFamily: fonts.bold, fontSize: 18, fontVariant: ["tabular-nums"] },
-});
+}));

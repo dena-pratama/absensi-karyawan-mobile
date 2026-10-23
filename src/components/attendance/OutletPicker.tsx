@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import type { BranchInfo } from "@/lib/employee";
 import { distanceM, type GpsState } from "@/lib/location";
-import { appColors as c, colors, fonts } from "@/lib/theme";
+import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { Icon } from "../Icon";
 import { Card, CardTitle, kit, Pill } from "../kit";
 
@@ -77,7 +77,7 @@ export function OutletPicker({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -90,4 +90,4 @@ const styles = StyleSheet.create({
   },
   rowActive: { borderColor: colors.brand },
   hint: { color: c.onSurfaceVariant, fontFamily: fonts.regular, fontSize: 11 },
-});
+}));
