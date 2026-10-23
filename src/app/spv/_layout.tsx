@@ -14,7 +14,7 @@ function tabIcon(android: IconName, ios: string) {
 
 /**
  * Tab SPV: Ceklis (monitoring absensi cabang), Absen (SPV ikut absen, pilih outlet), Riwayat absen SPV,
- * Backup Karyawan, Profil. Absen & Riwayat memakai data karyawan yang dihubungkan admin ke akun SPV.
+ * Kasbon, Backup Karyawan, Profil. Absen & Riwayat memakai data karyawan yang dihubungkan admin ke akun SPV.
  */
 export default function SpvLayout() {
   return (
@@ -33,6 +33,7 @@ export default function SpvLayout() {
           <Tabs.Screen name="index" options={{ title: "Ceklis", tabBarIcon: tabIcon("fact_check", "checklist") }} />
           <Tabs.Screen name="absen" options={{ title: "Absen", tabBarIcon: tabIcon("fingerprint", "touchid") }} />
           <Tabs.Screen name="riwayat" options={{ title: "Riwayat", tabBarIcon: tabIcon("receipt_long", "list.bullet.rectangle") }} />
+          <Tabs.Screen name="kasbon" options={{ title: "Kasbon", tabBarIcon: tabIcon("account_balance_wallet", "creditcard") }} />
           <Tabs.Screen name="backup" options={{ title: "Backup", tabBarIcon: tabIcon("swap_horiz", "arrow.left.arrow.right") }} />
           <Tabs.Screen name="profil" options={{ title: "Profil", tabBarIcon: tabIcon("badge", "person.text.rectangle") }} />
         </Tabs>

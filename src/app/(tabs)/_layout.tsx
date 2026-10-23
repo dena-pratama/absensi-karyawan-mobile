@@ -11,7 +11,7 @@ function tabIcon(android: IconName, ios: string) {
   };
 }
 
-/** Tab utama karyawan: Check In, Check Out, Riwayat, Profil. */
+/** Tab utama karyawan: Check In, Check Out, Riwayat, Kasbon, Profil. */
 export default function TabsLayout() {
   return (
     <EmployeeProvider>
@@ -28,6 +28,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="index" options={{ title: "Check In", tabBarIcon: tabIcon("login", "arrow.right.square") }} />
         <Tabs.Screen name="check-out" options={{ title: "Check Out", tabBarIcon: tabIcon("logout", "rectangle.portrait.and.arrow.right") }} />
         <Tabs.Screen name="riwayat" options={{ title: "Riwayat", tabBarIcon: tabIcon("receipt_long", "list.bullet.rectangle") }} />
+        <Tabs.Screen name="kasbon" options={{ title: "Kasbon", tabBarIcon: tabIcon("account_balance_wallet", "creditcard") }} />
         <Tabs.Screen name="profil" options={{ title: "Profil", tabBarIcon: tabIcon("badge", "person.text.rectangle") }} />
       </Tabs>
     </EmployeeProvider>

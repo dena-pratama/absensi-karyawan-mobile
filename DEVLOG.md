@@ -2,6 +2,31 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-25 — Kasbon (pinjaman gaji)
+
+Pasangan migrasi web `20261025000000_kasbon.sql`, yang belum dijalankan saat ditulis. Sebelum migrasi,
+tab Kasbon menampilkan "Fitur kasbon belum aktif di server".
+
+**Aturan (keputusan user):**
+- plafon = gaji pokok (jabatan, atau khusus per orang) ÷ pembagi (diatur admin) × HK. HK = hari berstatus
+  Hadir di periode gajian (cut-off diatur admin);
+- kasbon diajukan / disetujui / dicairkan di periode itu mengurangi sisa plafon;
+- pelunasan lewat potong gaji.
+
+**Semua hitungan uang di server** (`kasbon_quota`, `kasbon_request`). App hanya menampilkan.
+
+**Tab Kasbon** untuk karyawan & SPV (`src/components/KasbonScreen.tsx`, data di `src/lib/kasbon.ts`):
+- kartu plafon: periode, gaji pokok, gaji harian (÷ pembagi), HK, plafon, sudah dipakai, sisa;
+- form ajukan: nominal rupiah dengan pemisah titik, tombol cepat 25% / 50% / Maksimal, keperluan
+  (maks. 200 huruf). Server mengecek ulang batas plafon;
+- riwayat: nominal, status (Diajukan, Disetujui, Ditolak, Dicairkan, Lunas, Dibatalkan; dicairkan yang
+  periodenya sudah lewat tampil "Lunas · potong gaji"), catatan admin, tanggal tiap tahap;
+- **Batalkan** selama masih Diajukan;
+- **Lihat bukti**: foto pencairan dari bucket privat `kasbon-proof`, lewat link sementara 1 jam.
+
+Gaji pokok belum diatur → pesan "Gaji pokok belum diatur", form tidak ditampilkan.
+Akun belum terhubung ke data karyawan → pesan dari server. Admin memakai panel web, jadi app admin tidak berubah.
+
 ## 2026-10-24 — SPV ikut absen (pilih outlet)
 
 Keputusan user berubah: SPV sekarang **ikut absen** lewat app (GPS + selfie) dan memilih outlet. Pasangan
