@@ -2,6 +2,13 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-30 — Build EAS: WFA & Office outlet otomatis
+
+- Migrasi `20261030000000_wfa.sql` sudah dijalankan user di Supabase.
+- Dari commit `59265c1`, kedua build **berhasil**:
+  - development `fe1ed059-d726-4d1a-a1f5-8ebfd278bc1f`: ±142 MB;
+  - preview `ea98f7c3-d360-4a8b-8780-8766d907c506`: ±64 MB.
+
 ## 2026-10-30 — WFA untuk SPV & Office; Office tanpa pilih outlet
 
 Pasangan migrasi web `20261030000000_wfa.sql`, yang belum dijalankan saat ditulis.
