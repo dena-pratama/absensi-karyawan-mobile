@@ -16,6 +16,47 @@ export type GpsCheck = {
   message?: string;
 };
 
+/** Masalah GPS yang membuat absen belum bisa (mencari, izin ditolak, GPS mati, gagal, lokasi palsu). */
+function gpsProblem(gps: GpsState): Omit<GpsCheck, "branch"> | null {
+  switch (gps.status) {
+    case "locating":
+      return { ok: false, tone: "info", title: "Mencari lokasi Anda…", message: "Pastikan GPS aktif. Di tempat terbuka biasanya lebih cepat." };
+    case "denied":
+      return {
+        ok: false,
+        tone: "danger",
+        title: "Izin lokasi ditolak",
+        message: gps.canAskAgain
+          ? "Tekan Perbarui lalu pilih Izinkan."
+          : "Buka Pengaturan HP → Aplikasi → izinkan Lokasi untuk app ini.",
+      };
+    case "off":
+      return { ok: false, tone: "danger", title: "GPS HP mati", message: "Nyalakan Lokasi/GPS di HP lalu tekan Perbarui." };
+    case "error":
+      return { ok: false, tone: "danger", title: "Lokasi belum didapat", message: gps.message };
+  }
+  if (gps.fix.mocked) {
+    return { ok: false, tone: "danger", title: "Lokasi palsu terdeteksi", message: "Matikan aplikasi fake GPS / lokasi tiruan lalu coba lagi." };
+  }
+  return null;
+}
+
+/**
+ * Mode WFA (SPV / Office): tanpa batas area outlet. Cukup lokasi valid (bukan palsu); absensi tercatat
+ * di cabang utama dan koordinat tetap direkam. Server mengecek ulang.
+ */
+export function evaluateWfa(mainBranch: BranchInfo | null, gps: GpsState): GpsCheck {
+  const problem = gpsProblem(gps);
+  if (problem) return { ...problem, branch: mainBranch };
+  return {
+    ok: true,
+    branch: mainBranch,
+    tone: "info",
+    title: "Mode WFA aktif",
+    message: `Absen tercatat di cabang utama${mainBranch ? ` (${mainBranch.code})` : ""}, lokasi tetap direkam.`,
+  };
+}
+
 /**
  * Nilai status GPS terhadap area cabang yang boleh dipakai absen (cabang penempatan dan/atau
  * cabang backup hari ini). Seperti server: dipilih cabang terdekat. Server mengecek ulang.
@@ -27,27 +68,8 @@ export function evaluateGps(candidates: BranchInfo[], gps: GpsState): GpsCheck {
   if (withGps.length === 0) {
     return { ok: false, branch: first, tone: "warning", title: "Titik GPS cabang belum diatur", message: "Minta admin mengatur Area GPS Absen cabang di panel web." };
   }
-  const branchNow = (check: Omit<GpsCheck, "branch">): GpsCheck => ({ ...check, branch: first });
-  switch (gps.status) {
-    case "locating":
-      return branchNow({ ok: false, tone: "info", title: "Mencari lokasi Anda…", message: "Pastikan GPS aktif. Di tempat terbuka biasanya lebih cepat." });
-    case "denied":
-      return branchNow({
-        ok: false,
-        tone: "danger",
-        title: "Izin lokasi ditolak",
-        message: gps.canAskAgain
-          ? "Tekan Perbarui lalu pilih Izinkan."
-          : "Buka Pengaturan HP → Aplikasi → izinkan Lokasi untuk app ini.",
-      });
-    case "off":
-      return branchNow({ ok: false, tone: "danger", title: "GPS HP mati", message: "Nyalakan Lokasi/GPS di HP lalu tekan Perbarui." });
-    case "error":
-      return branchNow({ ok: false, tone: "danger", title: "Lokasi belum didapat", message: gps.message });
-  }
-  if (gps.fix.mocked) {
-    return branchNow({ ok: false, tone: "danger", title: "Lokasi palsu terdeteksi", message: "Matikan aplikasi fake GPS / lokasi tiruan lalu coba lagi." });
-  }
+  const problem = gpsProblem(gps);
+  if (problem || gps.status !== "ok") return { ...(problem ?? { ok: false, tone: "info", title: "Mencari lokasi Anda…" }), branch: first };
   const fix = gps.fix;
   const [branch, d] = withGps
     .map((b) => [b, Math.round(distanceM(fix, { lat: b.latitude!, lng: b.longitude! }))] as const)

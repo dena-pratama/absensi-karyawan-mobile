@@ -2,6 +2,20 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-30 — WFA untuk SPV & Office; Office tanpa pilih outlet
+
+Pasangan migrasi web `20261030000000_wfa.sql`, yang belum dijalankan saat ditulis.
+- **Mode absen** di tab Absen SPV & Office: **Di outlet** / **WFA (di luar outlet)**.
+  - WFA → `p_wfa: true`, tanpa batas area. Lokasi GPS + selfie tetap direkam, absensi tercatat di cabang utama.
+    Catatan di layar: "Absen tercatat di cabang utama, lokasi tetap direkam."
+  - App hanya mengecek lokasi valid & bukan palsu (`evaluateWfa`). Server mengecek ulang.
+- **Office**: pemilih outlet disembunyikan ("Outlet terdekat dideteksi otomatis"). Info jarak memakai outlet
+  terdekat dari `my_checkin_branches()`, dan `p_branch` tidak dikirim. SPV tetap bisa memilih outlet.
+- Karyawan biasa tidak melihat pilihan WFA.
+- Riwayat: badge **WFA** di jam masuk / pulang. Kotak "Absen masuk/pulang tercatat" dan pop up berhasil ditandai "(WFA)".
+- Kolom `check_in_wfa` / `check_out_wfa` dibaca dengan cadangan bertingkat: kalau kolom belum ada, query
+  diulang tanpa kolom itu. `p_wfa` hanya dikirim saat WFA, supaya tetap cocok dengan fungsi lama.
+
 ## 2026-10-27 — Build EAS: pop up absen, keterangan outlet, versi di bawah login, role Office
 
 - Dari commit `a8f7738` (sudah di-push user ke GitHub), kedua build **berhasil**:

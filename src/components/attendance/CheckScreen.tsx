@@ -3,7 +3,7 @@
 
 import { useFocusEffect, useIsFocused } from "expo-router";
 import { useCallback, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { submitAttendance, type AttendanceRow, type CheckKind } from "@/lib/attendance";
 import { useAuth } from "@/lib/auth";
@@ -13,9 +13,9 @@ import { locate, type GpsState } from "@/lib/location";
 import { appColors as c, colors, fonts, themedStyles } from "@/lib/theme";
 import { formatTimeWIB } from "@/shared/format";
 import { ATTENDANCE_LABEL } from "@/shared/labels";
-import { Icon } from "../Icon";
-import { ActionButton, Avatar, Card, kit, LiveClock, LoadingCard, Notice, Pill, TabScreen, type Tone } from "../kit";
-import { evaluateGps, GpsCard } from "./GpsCard";
+import { Icon, type IconName } from "../Icon";
+import { ActionButton, Avatar, Card, CardTitle, kit, LiveClock, LoadingCard, Notice, Pill, TabScreen, type Tone } from "../kit";
+import { evaluateGps, evaluateWfa, GpsCard } from "./GpsCard";
 import { OutletPicker, rankOutlets } from "./OutletPicker";
 import { SuccessDialog, type CheckSuccess } from "./SuccessDialog";
 import { SelfieCard } from "./SelfieCard";
@@ -72,10 +72,42 @@ function GpsHeaderPill({ gps }: { gps: GpsState | null }) {
 
 /** "Masuk pukul 07:45 WIB di JKT109A." (+ outlet pulang bila berbeda). */
 function doneMessage(kind: CheckKind, today: AttendanceRow, checkedOut: boolean) {
-  const inAt = `Masuk pukul ${formatTimeWIB(today.check_in_at!)}${today.branch ? ` di ${today.branch.code}` : ""}`;
+  const inAt = `Masuk pukul ${formatTimeWIB(today.check_in_at!)}${today.branch ? ` di ${today.branch.code}` : ""}${today.check_in_wfa ? " (WFA)" : ""}`;
   if (kind === "in") return `${inAt}.${checkedOut ? "" : " Jangan lupa check out saat pulang."}`;
   const outBranch = today.check_out_branch ?? today.branch;
-  return `${inAt}, pulang pukul ${formatTimeWIB(today.check_out_at!)}${outBranch ? ` di ${outBranch.code}` : ""}.`;
+  return `${inAt}, pulang pukul ${formatTimeWIB(today.check_out_at!)}${outBranch ? ` di ${outBranch.code}` : ""}${today.check_out_wfa ? " (WFA)" : ""}.`;
+}
+
+/** Pilihan mode absen untuk SPV / Office: di outlet (dalam radius) atau WFA (di luar outlet). */
+function WfaToggle({ value, onChange, disabled }: { value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+  const options: { wfa: boolean; label: string; icon: { android: IconName; ios: string } }[] = [
+    { wfa: false, label: "Di outlet", icon: { android: "storefront", ios: "storefront" } },
+    { wfa: true, label: "WFA (di luar outlet)", icon: { android: "home_work", ios: "house" } },
+  ];
+  return (
+    <Card>
+      <CardTitle icon={{ android: "work_history", ios: "briefcase" }} label="Mode absen" />
+      <View style={styles.modeRow}>
+        {options.map((o) => {
+          const active = o.wfa === value;
+          return (
+            <Pressable
+              key={o.label}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: active, disabled }}
+              disabled={disabled}
+              onPress={() => onChange(o.wfa)}
+              style={[styles.modeOption, active && styles.modeOptionActive]}
+            >
+              <Icon {...o.icon} size={20} color={active ? c.onPrimary : c.onSurfaceVariant} />
+              <Text style={[styles.modeText, active && { color: c.onPrimary }]}>{o.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {value && <Text style={kit.muted}>Absen tercatat di cabang utama, lokasi tetap direkam.</Text>}
+    </Card>
+  );
 }
 
 /** Gabungkan daftar cabang tanpa duplikat (urutan pertama dipertahankan). */
@@ -99,8 +131,11 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
   const [refreshing, setRefreshing] = useState(false);
   const [pickedOutlet, setPickedOutlet] = useState<string | null>(null);
   const [success, setSuccess] = useState<CheckSuccess | null>(null);
+  const [wfa, setWfa] = useState(false);
   const { role } = useAuth();
   const isSpv = outlets !== undefined;
+  // Office tidak memilih outlet: outlet terdekat dideteksi otomatis (server mengabaikan p_branch).
+  const isOffice = isSpv && role === "office";
   const notLinked = error === NOT_LINKED_SPV || error === NOT_LINKED_KARYAWAN;
 
   // Kondisi absen hari ini
@@ -183,8 +218,17 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
         : "Akun ini baru memegang 1 cabang. Minta admin menambah cabang di panel web (Pengguna & Akses) supaya bisa memilih outlet lain.";
   // Pilihan pengguna dipakai selama masih ada di daftar; kalau belum memilih → outlet terdekat.
   const outletId = ranked.some((r) => r.branch.id === pickedOutlet) ? pickedOutlet : (ranked[0]?.branch.id ?? null);
-  const candidates = isSpv ? ranked.filter((r) => r.branch.id === outletId).map((r) => r.branch) : autoCandidates;
-  const gpsCheck = evaluateGps(candidates, gps ?? { status: "locating" });
+  const candidates = isOffice
+    ? outletOptions
+    : isSpv
+      ? ranked.filter((r) => r.branch.id === outletId).map((r) => r.branch)
+      : autoCandidates;
+  // WFA: tercatat di cabang utama (penempatan), atau cabang baris hari ini bila sudah ada.
+  const wfaBranch = today?.branch ?? profile.branch;
+  const useWfa = isSpv && wfa;
+  const gpsCheck = useWfa
+    ? evaluateWfa(wfaBranch, gps ?? { status: "locating" })
+    : evaluateGps(candidates, gps ?? { status: "locating" });
   const backup = profile.backupToday;
   const ready = gpsCheck.ok && !!photoUri && !submitting;
   const missing = !gpsCheck.ok ? "Lokasi belum memenuhi syarat." : !photoUri ? "Ambil foto selfie dulu." : null;
@@ -193,12 +237,19 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
     if (!profile || gps?.status !== "ok" || !photoUri) return;
     setSubmitting(true);
     setSubmitError(null);
-    const result = await submitAttendance(kind, profile.id, gps.fix, photoUri, isSpv ? (outletId ?? undefined) : undefined);
+    const result = await submitAttendance(
+      kind,
+      profile.id,
+      gps.fix,
+      photoUri,
+      isSpv && !isOffice && !useWfa ? (outletId ?? undefined) : undefined,
+      useWfa,
+    );
     if (result.ok) {
       // Nama outlet tercatat: dari daftar cabang yang sudah dimuat (kandidat / pilihan outlet / profil).
-      const known = uniqueBranches([...candidates, ...outletOptions, profile.branch, profile.backupToday?.toBranch]);
-      const b = known.find((x) => x.id === result.branchId) ?? (candidates.length === 1 ? candidates[0] : null);
-      setSuccess({ kind, at: result.at, outlet: b ? `${b.code} - ${b.name}` : null });
+      const known = uniqueBranches([...candidates, ...outletOptions, wfaBranch, profile.backupToday?.toBranch]);
+      const b = known.find((x) => x.id === result.branchId) ?? gpsCheck.branch;
+      setSuccess({ kind, at: result.at, outlet: b ? `${b.code} - ${b.name}${useWfa ? " (WFA)" : ""}` : null });
       setPhotoUri(null);
       await refresh();
     } else {
@@ -249,7 +300,16 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
 
       {canCapture && (
         <>
-          {isSpv && (
+          {isSpv && <WfaToggle value={wfa} onChange={setWfa} disabled={submitting} />}
+          {isOffice && !useWfa && (
+            <Notice
+              tone="muted"
+              icon={{ android: "near_me", ios: "location" }}
+              title="Outlet terdekat dideteksi otomatis"
+              message="Office tidak perlu memilih outlet. Absen tercatat di outlet terdekat yang radiusnya memuat lokasi Anda."
+            />
+          )}
+          {isSpv && !isOffice && !useWfa && (
             <OutletPicker
               title={kind === "in" ? "Outlet check in" : "Outlet check out"}
               ranked={ranked}
@@ -303,5 +363,17 @@ const styles = themedStyles(() => ({
   },
   gpsDot: { width: 8, height: 8, borderRadius: 4 },
   gpsPillText: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 11 },
+  modeRow: { flexDirection: "row", gap: 8 },
+  modeOption: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    backgroundColor: c.input,
+  },
+  modeOptionActive: { backgroundColor: colors.brand },
+  modeText: { color: c.onSurface, fontFamily: fonts.semibold, fontSize: 12, textAlign: "center" },
   footnote: { flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
 }));

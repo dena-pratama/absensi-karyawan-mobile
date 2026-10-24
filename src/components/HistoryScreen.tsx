@@ -76,6 +76,7 @@ function DayCard({ row }: { row: AttendanceRow }) {
             <View style={styles.timeLabel}>
               <Icon android="login" ios="arrow.right.square" size={16} color={colors.brand} />
               <Text style={kit.label}>MASUK</Text>
+              {row.check_in_wfa ? <Pill tone="info" label="WFA" /> : null}
             </View>
             <Text style={styles.time}>{formatTimeWIB(row.check_in_at)}</Text>
             {outBranch && row.branch ? <Text style={kit.muted}>{row.branch.code}</Text> : null}
@@ -84,6 +85,7 @@ function DayCard({ row }: { row: AttendanceRow }) {
             <View style={styles.timeLabel}>
               <Icon android="logout" ios="rectangle.portrait.and.arrow.right" size={16} color={c.warning} />
               <Text style={kit.label}>PULANG</Text>
+              {row.check_out_wfa ? <Pill tone="info" label="WFA" /> : null}
             </View>
             <Text style={styles.time}>{row.check_out_at ? formatTimeWIB(row.check_out_at) : "Belum"}</Text>
             {outBranch ? <Text style={kit.muted}>di {outBranch.code} - {outBranch.name}</Text> : null}

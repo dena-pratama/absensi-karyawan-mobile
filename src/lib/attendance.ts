@@ -29,14 +29,22 @@ export type AttendanceRow = {
   branch: BranchInfo | null;
   /** Outlet tempat check out (SPV boleh pulang di outlet lain); null = sama / belum pulang. */
   check_out_branch?: { id: string; code: string; name: string } | null;
+  /** Absen mode WFA (SPV / Office, di luar outlet). Tidak ada sebelum migrasi wfa. */
+  check_in_wfa?: boolean;
+  check_out_wfa?: boolean;
 };
 
 const BASE_COLUMNS =
   "id, attendance_date, status, note, check_in_at, check_in_distance_m, check_out_at, check_out_distance_m, branch:branch_id(id, code, name, latitude, longitude, geofence_radius_m)";
-const FULL_COLUMNS = `${BASE_COLUMNS}, check_out_branch:check_out_branch_id(id, code, name)`;
+const OUTLET_COLUMNS = `${BASE_COLUMNS}, check_out_branch:check_out_branch_id(id, code, name)`;
+const FULL_COLUMNS = `${OUTLET_COLUMNS}, check_in_wfa, check_out_wfa`;
 
-/** false setelah server menolak kolom check_out_branch_id (migrasi spv_attendance belum dijalankan). */
-let hasCheckOutBranch = true;
+/**
+ * Kolom yang dicoba berurutan, dari paling lengkap. Kolom yang belum ada di database (migrasi wfa /
+ * spv_attendance belum dijalankan) ditolak server, lalu dicoba set berikutnya. Indeks yang berhasil diingat.
+ */
+const COLUMN_SETS = [FULL_COLUMNS, OUTLET_COLUMNS, BASE_COLUMNS];
+let columnLevel = 0;
 
 /**
  * Jalankan query attendance_daily dengan kolom lengkap; kalau kolom outlet check out belum ada
@@ -45,15 +53,13 @@ let hasCheckOutBranch = true;
 export async function selectAttendance<T>(
   run: (columns: string) => PromiseLike<{ data: T | null; error: { code?: string } | null }>,
 ): Promise<T | null> {
-  if (hasCheckOutBranch) {
-    const { data, error } = await run(FULL_COLUMNS);
+  for (;;) {
+    const { data, error } = await run(COLUMN_SETS[columnLevel]);
     if (!error) return data;
-    if (!["42703", "PGRST200", "PGRST100"].includes(error.code ?? "")) throw error;
-    hasCheckOutBranch = false;
+    const missingColumn = ["42703", "PGRST200", "PGRST100"].includes(error.code ?? "");
+    if (!missingColumn || columnLevel === COLUMN_SETS.length - 1) throw error;
+    columnLevel += 1;
   }
-  const { data, error } = await run(BASE_COLUMNS);
-  if (error) throw error;
-  return data;
 }
 
 function friendlyError(error: { code?: string; message: string }): string {
@@ -78,13 +84,17 @@ async function compressSelfie(uri: string): Promise<ArrayBuffer> {
   return new File(saved.uri).arrayBuffer();
 }
 
-/** `branchId` = outlet pilihan (SPV); kosong = server memilih cabang terdekat yang diizinkan. */
+/**
+ * `branchId` = outlet pilihan (SPV); kosong = server memilih cabang terdekat yang diizinkan.
+ * `wfa` = mode WFA (SPV / Office): tanpa batas area, tercatat di cabang utama.
+ */
 export async function submitAttendance(
   kind: CheckKind,
   employeeId: string,
   fix: GpsFix,
   photoUri: string,
   branchId?: string,
+  wfa = false,
 ): Promise<
   { ok: true; at: string; branchId: string | null } | { ok: false; message: string }
 > {
@@ -112,6 +122,7 @@ export async function submitAttendance(
       p_mocked: fix.mocked,
       // Hanya dikirim bila ada, supaya tetap cocok dengan versi fungsi lama (6 parameter).
       ...(branchId ? { p_branch: branchId } : {}),
+      ...(wfa ? { p_wfa: true } : {}),
     });
     if (error) return { ok: false, message: friendlyError(error) };
     // Baris absensi dari server: jam & outlet yang tercatat (jam server, bukan jam HP).
