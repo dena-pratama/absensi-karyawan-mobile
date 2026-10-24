@@ -30,11 +30,27 @@ export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
 /** Kode cabang & NIK karyawan bebas format (huruf, angka, simbol, spasi): wajib diisi, maks. 30 karakter. */
 export const CODE_MAX = 30;
 
-/** Role akun login (lihat migrasi role_based_rls). */
-export type AppRole = "admin" | "spv" | "karyawan";
+/** Role akun login (lihat migrasi role_based_rls & office_role). */
+export type AppRole = "admin" | "spv" | "office" | "karyawan";
 
 export const APP_ROLE_LABEL: Record<AppRole, string> = {
   admin: "Admin",
   spv: "SPV Cabang",
+  office: "Office",
   karyawan: "Karyawan",
+};
+
+/** Role yang memegang cabang (SPV & Office). Office = SPV yang boleh absen di cabang mana pun. */
+export const holdsBranches = (role: AppRole | "" | null | undefined): role is "spv" | "office" => role === "spv" || role === "office";
+
+/** Status kasbon (lihat migrasi kasbon). */
+export type KasbonStatus = "diajukan" | "disetujui" | "ditolak" | "dicairkan" | "lunas" | "dibatalkan";
+
+export const KASBON_STATUS_LABEL: Record<KasbonStatus, string> = {
+  diajukan: "Diajukan",
+  disetujui: "Disetujui",
+  ditolak: "Ditolak",
+  dicairkan: "Dicairkan",
+  lunas: "Lunas",
+  dibatalkan: "Dibatalkan",
 };

@@ -5,6 +5,7 @@
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { todayWIB } from "@/shared/format";
+import { holdsBranches } from "@/shared/labels";
 import { selectAttendance, type AttendanceRow } from "./attendance";
 import { BRANCH_COLUMNS, fetchBackups, type Backup } from "./backup";
 import { useAuth } from "./auth";
@@ -101,7 +102,7 @@ async function loadEmployee(userId: string) {
 /** Pesan saat akun belum dihubungkan ke data karyawan (dipakai juga untuk menyembunyikan tombol absen). */
 export const NOT_LINKED_KARYAWAN = "Akun ini belum terhubung ke data karyawan. Hubungi admin.";
 export const NOT_LINKED_SPV =
-  "Akun SPV belum terhubung ke data karyawan, hubungi admin (Pengguna & Akses → Absen sebagai).";
+  "Akun SPV / Office belum terhubung ke data karyawan, hubungi admin (Pengguna & Akses → Absen sebagai).";
 
 /** Seperti loadEmployee, tapi error diubah jadi pesan ramah (string). */
 async function loadEmployeeSafe(userId: string, isSpv: boolean) {
@@ -116,7 +117,7 @@ async function loadEmployeeSafe(userId: string, isSpv: boolean) {
 export function EmployeeProvider({ children }: { children: ReactNode }) {
   const { session, role } = useAuth();
   const userId = session?.user.id;
-  const isSpv = role === "spv";
+  const isSpv = holdsBranches(role);
   const [state, setState] = useState<Omit<EmployeeState, "refresh">>({
     loading: true,
     error: null,

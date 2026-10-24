@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import { Text, View } from "react-native";
 
 import { submitAttendance, type AttendanceRow, type CheckKind } from "@/lib/attendance";
+import { useAuth } from "@/lib/auth";
 import { formatRange } from "@/lib/backup";
 import { NOT_LINKED_KARYAWAN, NOT_LINKED_SPV, useEmployee, type BranchInfo, type EmployeeProfile } from "@/lib/employee";
 import { locate, type GpsState } from "@/lib/location";
@@ -27,11 +28,11 @@ const TEXT: Record<CheckKind, { title: string; submit: string; done: string }> =
 function GreetingCard({
   profile,
   status,
-  isSpv,
+  roleLabel,
 }: {
   profile: EmployeeProfile;
   status: { tone: Tone; label: string };
-  isSpv: boolean;
+  roleLabel: string;
 }) {
   return (
     <Card>
@@ -39,7 +40,7 @@ function GreetingCard({
         <Avatar name={profile.full_name} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={styles.greetCaption} numberOfLines={1}>
-            {isSpv ? "SPV" : "KARYAWAN"} • {profile.nik}
+            {roleLabel.toUpperCase()} • {profile.nik}
           </Text>
           <Text style={styles.greetName} numberOfLines={1}>
             Halo, {profile.full_name}
@@ -98,6 +99,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
   const [refreshing, setRefreshing] = useState(false);
   const [pickedOutlet, setPickedOutlet] = useState<string | null>(null);
   const [success, setSuccess] = useState<CheckSuccess | null>(null);
+  const { role } = useAuth();
   const isSpv = outlets !== undefined;
   const notLinked = error === NOT_LINKED_SPV || error === NOT_LINKED_KARYAWAN;
 
@@ -178,7 +180,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
       ? undefined
       : kind === "in" && today?.branch
         ? `Hari ini Anda sudah tercatat di ${today.branch.code} (diisi lewat ceklis di web), jadi check in harus di outlet itu.`
-        : "Akun SPV ini baru memegang 1 cabang. Minta admin menambah cabang di panel web (Pengguna & Akses) supaya bisa memilih outlet lain.";
+        : "Akun ini baru memegang 1 cabang. Minta admin menambah cabang di panel web (Pengguna & Akses) supaya bisa memilih outlet lain.";
   // Pilihan pengguna dipakai selama masih ada di daftar; kalau belum memilih → outlet terdekat.
   const outletId = ranked.some((r) => r.branch.id === pickedOutlet) ? pickedOutlet : (ranked[0]?.branch.id ?? null);
   const candidates = isSpv ? ranked.filter((r) => r.branch.id === outletId).map((r) => r.branch) : autoCandidates;
@@ -207,7 +209,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
 
   return (
     <TabScreen title={title} right={canCapture ? <GpsHeaderPill gps={gps} /> : null} refreshing={refreshing} onRefresh={onRefresh}>
-      <GreetingCard profile={profile} status={status} isSpv={isSpv} />
+      <GreetingCard profile={profile} status={status} roleLabel={role === "office" ? "Office" : isSpv ? "SPV" : "Karyawan"} />
 
       {backup && (
         <Notice

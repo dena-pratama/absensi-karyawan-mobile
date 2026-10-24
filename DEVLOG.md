@@ -2,6 +2,19 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-27 — Role baru Office
+
+Pasangan migrasi web `20261027000000_office_role.sql`, yang belum dijalankan saat ditulis.
+- **Office = SPV**: memegang cabang, membuat backup, kasbon sendiri. Bedanya, Office boleh **check in &
+  check out di cabang mana pun** yang aktif (tetap GPS + selfie).
+- `src/shared/labels.ts` disalin ulang dari web: `AppRole` + `"office"` (label "Office"), helper `holdsBranches()`.
+- `auth.tsx` mengenali role `office`. `_layout.tsx` mengarahkan SPV **dan** Office ke layar `spv/`.
+  `EmployeeProvider` memperlakukan Office seperti SPV.
+- Pemilih outlet di tab Absen kini dari `my_checkin_branches()` (server): karyawan = penempatan/backup,
+  SPV = + cabangnya, Office = + semua cabang aktif. Office tidak bisa membaca cabang lain lewat tabel `branch`
+  (RLS), jadi daftar ini wajib dari server. Sebelum migrasi, app memakai cabang SPV seperti sebelumnya.
+- Teks ikut role: sapaan "OFFICE • NIK", label role di Profil, info absen di Profil, pesan akun belum terhubung.
+
 ## 2026-10-25 — Pop up "Check In / Check Out Berhasil"
 
 - Setelah absen berhasil, muncul pop up (`src/components/attendance/SuccessDialog.tsx`):

@@ -1,8 +1,8 @@
 import { CheckScreen } from "@/components/attendance/CheckScreen";
 import { useSpv } from "@/lib/spv";
 
-/** Absen SPV: check in lalu check out, dengan memilih outlet dari cabang-cabang yang dipegang. */
+/** Absen SPV / Office: check in lalu check out, memilih outlet (SPV: cabangnya; Office: semua cabang aktif). */
 export default function SpvAbsen() {
-  const { branches } = useSpv();
-  return <CheckScreen outlets={branches} />;
+  const { checkinBranches } = useSpv();
+  return <CheckScreen outlets={checkinBranches} />;
 }

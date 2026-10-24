@@ -13,7 +13,7 @@ function tabIcon(android: IconName, ios: string) {
 }
 
 /**
- * Tab SPV: Absen (SPV ikut absen, pilih outlet), Riwayat absen SPV, Kasbon, Backup Karyawan, Profil.
+ * Tab SPV & Office (Office = SPV yang boleh absen di cabang mana pun): Absen (pilih outlet), Riwayat absen SPV, Kasbon, Backup Karyawan, Profil.
  * Absen & Riwayat memakai data karyawan yang dihubungkan admin ke akun SPV.
  * Ceklis / monitoring absensi cabang hanya lewat panel web (keputusan user).
  */

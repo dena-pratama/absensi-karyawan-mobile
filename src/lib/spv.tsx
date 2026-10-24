@@ -16,6 +16,8 @@ type SpvState = {
   loading: boolean;
   error: string | null;
   branches: BranchInfo[];
+  /** Outlet yang boleh dipakai absen hari ini (dari server). Office: semua cabang aktif. */
+  checkinBranches: BranchInfo[];
   refresh: () => Promise<void>;
 };
 
@@ -45,21 +47,47 @@ async function loadBranches(userId: string): Promise<BranchInfo[]> {
   return branch ? [branch] : [];
 }
 
+/**
+ * Outlet absen hari ini lewat fungsi my_checkin_branches() (karyawan: penempatan/backup; SPV: + cabangnya;
+ * Office: + semua cabang aktif). RLS tabel branch tidak mengizinkan Office membaca cabang yang tidak dipegang,
+ * jadi daftar ini wajib dari server. Fungsi belum ada (migrasi office_role belum dijalankan) → cabang SPV.
+ */
+async function loadCheckinBranches(fallback: BranchInfo[]): Promise<BranchInfo[]> {
+  const { data, error } = await supabase.rpc("my_checkin_branches");
+  if (error) {
+    if (isMissingSchema(error)) return fallback;
+    throw error;
+  }
+  return ((data ?? []) as BranchInfo[]).sort((a, b) => a.code.localeCompare(b.code));
+}
+
 export function SpvProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user.id;
-  const [state, setState] = useState<{ loading: boolean; error: string | null; branches: BranchInfo[] }>({
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    branches: BranchInfo[];
+    checkinBranches: BranchInfo[];
+  }>({
     loading: true,
     error: null,
     branches: [],
+    checkinBranches: [],
   });
 
   const load = useCallback(async (uid: string) => {
     try {
       const branches = await loadBranches(uid);
-      return { loading: false, error: null, branches };
+      const checkinBranches = await loadCheckinBranches(branches);
+      return { loading: false, error: null, branches, checkinBranches };
     } catch {
-      return { loading: false, error: "Gagal memuat daftar cabang. Periksa koneksi internet lalu coba lagi.", branches: [] };
+      return {
+        loading: false,
+        error: "Gagal memuat daftar cabang. Periksa koneksi internet lalu coba lagi.",
+        branches: [],
+        checkinBranches: [],
+      };
     }
   }, []);
 

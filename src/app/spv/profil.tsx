@@ -12,7 +12,7 @@ import { APP_ROLE_LABEL } from "@/shared/labels";
 import { displayLogin } from "@/shared/login-id";
 
 export default function SpvProfil() {
-  const { session, signOut } = useAuth();
+  const { session, role, signOut } = useAuth();
   const { branches, loading, error, refresh } = useSpv();
   const [refreshing, setRefreshing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -33,7 +33,7 @@ export default function SpvProfil() {
             <Text style={styles.name}>{username || "-"}</Text>
             <View style={styles.role}>
               <Icon android="shield_person" ios="person.badge.shield.checkmark" size={16} color={colors.brand} />
-              <Text style={styles.roleText}>{APP_ROLE_LABEL.spv}</Text>
+              <Text style={styles.roleText}>{role ? APP_ROLE_LABEL[role] : "-"}</Text>
             </View>
           </View>
         </View>
@@ -64,8 +64,8 @@ export default function SpvProfil() {
       <Notice
         tone="muted"
         icon={{ android: "info", ios: "info.circle" }}
-        title="Absen SPV"
-        message="Absen lewat tab Absen: pilih outlet dari cabang Anda, lalu GPS + selfie. Check out boleh di outlet lain. Ceklis & monitoring absensi cabang dilakukan lewat panel web."
+        title={role === "office" ? "Absen Office" : "Absen SPV"}
+        message={`Absen lewat tab Absen: pilih outlet ${role === "office" ? "dari semua cabang" : "dari cabang Anda"}, lalu GPS + selfie. Check out boleh di outlet lain. Ceklis & monitoring absensi cabang dilakukan lewat panel web.`}
       />
 
       <ThemeSetting />

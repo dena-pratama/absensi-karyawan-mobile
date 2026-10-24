@@ -23,7 +23,7 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
-const ROLES: readonly AppRole[] = ["admin", "spv", "karyawan"];
+const ROLES: readonly AppRole[] = ["admin", "spv", "office", "karyawan"];
 
 function isNetworkError(message: string) {
   return /network|fetch|timeout|connection/i.test(message);
