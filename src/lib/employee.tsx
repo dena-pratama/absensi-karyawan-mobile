@@ -5,7 +5,7 @@
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { todayWIB } from "@/shared/format";
-import { holdsBranches } from "@/shared/labels";
+import { attendsSelf } from "@/shared/labels";
 import { selectAttendance, type AttendanceRow } from "./attendance";
 import { BRANCH_COLUMNS, fetchBackups, type Backup } from "./backup";
 import { useAuth } from "./auth";
@@ -117,7 +117,7 @@ async function loadEmployeeSafe(userId: string, isSpv: boolean) {
 export function EmployeeProvider({ children }: { children: ReactNode }) {
   const { session, role } = useAuth();
   const userId = session?.user.id;
-  const isSpv = holdsBranches(role);
+  const isSpv = attendsSelf(role);
   const [state, setState] = useState<Omit<EmployeeState, "refresh">>({
     loading: true,
     error: null,

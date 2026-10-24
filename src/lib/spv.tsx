@@ -23,7 +23,18 @@ type SpvState = {
 
 const SpvContext = createContext<SpvState | null>(null);
 
-async function loadBranches(userId: string): Promise<BranchInfo[]> {
+/**
+ * Cabang yang dipegang akun ini.
+ * - Office: SEMUA cabang otomatis (tidak memakai app_user_branch / app_user.branch_id, yang bisa kosong);
+ *   dibaca langsung dari tabel branch (RLS mengembalikan semua cabang untuk Office).
+ * - SPV: daftar cabang di app_user_branch.
+ */
+async function loadBranches(userId: string, isOffice: boolean): Promise<BranchInfo[]> {
+  if (isOffice) {
+    const { data, error } = await supabase.from("branch").select(BRANCH_COLUMNS).order("code");
+    if (error) throw error;
+    return (data ?? []) as BranchInfo[];
+  }
   const { data, error } = await supabase
     .from("app_user_branch")
     .select(`branch:branch_id(${BRANCH_COLUMNS})`)
@@ -49,10 +60,11 @@ async function loadBranches(userId: string): Promise<BranchInfo[]> {
 
 /**
  * Outlet absen hari ini lewat fungsi my_checkin_branches() (karyawan: penempatan/backup; SPV: + cabangnya;
- * Office: + semua cabang aktif). RLS tabel branch tidak mengizinkan Office membaca cabang yang tidak dipegang,
- * jadi daftar ini wajib dari server. Fungsi belum ada (migrasi office_role belum dijalankan) → cabang SPV.
+ * Office: + semua cabang aktif). Aturan "boleh absen di mana" ada di server, jadi daftar ini dari server.
+ * Fungsi belum ada (migrasi office_role belum dijalankan) → cabang yang dipegang.
  */
 async function loadCheckinBranches(fallback: BranchInfo[]): Promise<BranchInfo[]> {
+  // (Office: semua cabang aktif; cabang nonaktif hanya untuk melihat / mengisi data, bukan absen.)
   const { data, error } = await supabase.rpc("my_checkin_branches");
   if (error) {
     if (isMissingSchema(error)) return fallback;
@@ -62,8 +74,9 @@ async function loadCheckinBranches(fallback: BranchInfo[]): Promise<BranchInfo[]
 }
 
 export function SpvProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { session, role } = useAuth();
   const userId = session?.user.id;
+  const isOffice = role === "office";
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -78,7 +91,7 @@ export function SpvProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async (uid: string) => {
     try {
-      const branches = await loadBranches(uid);
+      const branches = await loadBranches(uid, isOffice);
       const checkinBranches = await loadCheckinBranches(branches);
       return { loading: false, error: null, branches, checkinBranches };
     } catch {
@@ -89,7 +102,7 @@ export function SpvProvider({ children }: { children: ReactNode }) {
         checkinBranches: [],
       };
     }
-  }, []);
+  }, [isOffice]);
 
   useEffect(() => {
     if (!userId) return;
@@ -124,38 +137,26 @@ export function useSpv(): SpvState {
 
 type AssignmentRow = {
   employee_id: string;
-  job_role_id: string;
+  branch_id: string;
   employee: { nik: string; full_name: string } | null;
-  job_role: { name: string } | null;
 };
 
-/** Karyawan aktif yang ditempatkan di cabang (atau karyawan tertentu) pada tanggal itu. */
-async function queryRoster(by: { branchId: string } | { employeeIds: string[] }, date: string) {
+/**
+ * Karyawan aktif yang ditempatkan di cabang-cabang tertentu pada tanggal itu (satu query).
+ * `branchIds` kosong (undefined) = semua yang boleh dibaca RLS, dipakai Office yang memegang semua cabang.
+ */
+async function queryAssignments(branchIds: string[] | undefined, date: string) {
   let q = supabase
     .from("employee_assignment")
-    .select("employee_id, job_role_id, employee:employee_id!inner(nik, full_name), job_role:job_role_id(name)")
+    .select("employee_id, branch_id, employee:employee_id!inner(nik, full_name)")
     .eq("employee.is_active", true)
     .lte("valid_from", date)
     .or(`valid_to.is.null,valid_to.gte.${date}`)
     .order("valid_from", { ascending: false });
-  q = "branchId" in by ? q.eq("branch_id", by.branchId) : q.in("employee_id", by.employeeIds);
+  if (branchIds) q = q.in("branch_id", branchIds);
   const { data, error } = await q;
   if (error) throw error;
-
-  const seen = new Set<string>();
-  const roster: { employeeId: string; nik: string; name: string; roleId: string; roleName: string }[] = [];
-  for (const row of (data ?? []) as unknown as AssignmentRow[]) {
-    if (!row.employee || seen.has(row.employee_id)) continue;
-    seen.add(row.employee_id);
-    roster.push({
-      employeeId: row.employee_id,
-      nik: row.employee.nik,
-      name: row.employee.full_name,
-      roleId: row.job_role_id,
-      roleName: row.job_role?.name ?? "-",
-    });
-  }
-  return roster;
+  return (data ?? []) as unknown as AssignmentRow[];
 }
 
 // ---------------------------------------------------------------------------
@@ -189,18 +190,26 @@ export async function fetchBranchNames(): Promise<Map<string, { code: string; na
 
 export type EmployeeOption = { id: string; nik: string; name: string; branchCode: string };
 
-/** Karyawan yang ditempatkan di cabang-cabang SPV pada tanggal itu (pilihan karyawan backup). */
-export async function fetchBranchEmployees(branches: BranchInfo[], date: string): Promise<EmployeeOption[]> {
-  const lists = await Promise.all(branches.map((b) => queryRoster({ branchId: b.id }, date)));
+/**
+ * Karyawan yang ditempatkan di cabang-cabang yang dipegang pada tanggal itu (pilihan karyawan backup).
+ * `allBranches` = Office (semua cabang, tanpa filter cabang).
+ */
+export async function fetchBranchEmployees(
+  branches: BranchInfo[],
+  date: string,
+  allBranches = false,
+): Promise<EmployeeOption[]> {
+  if (!allBranches && branches.length === 0) return [];
+  const rows = await queryAssignments(allBranches ? undefined : branches.map((b) => b.id), date);
+  const code = new Map(branches.map((b) => [b.id, b.code]));
+  // Satu karyawan bisa punya >1 penempatan dalam rentang (mutasi) → ambil yang terbaru (urutan query).
   const seen = new Set<string>();
   const result: EmployeeOption[] = [];
-  lists.forEach((list, i) => {
-    for (const r of list) {
-      if (seen.has(r.employeeId)) continue;
-      seen.add(r.employeeId);
-      result.push({ id: r.employeeId, nik: r.nik, name: r.name, branchCode: branches[i].code });
-    }
-  });
+  for (const r of rows) {
+    if (!r.employee || seen.has(r.employee_id)) continue;
+    seen.add(r.employee_id);
+    result.push({ id: r.employee_id, nik: r.employee.nik, name: r.employee.full_name, branchCode: code.get(r.branch_id) ?? "" });
+  }
   return result.sort((a, b) => a.name.localeCompare(b.name));
 }
 

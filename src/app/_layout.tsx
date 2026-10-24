@@ -14,7 +14,7 @@ import { MessageScreen } from "@/components/ui";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { configError } from "@/lib/supabase";
 import { colors, ThemeProvider, useTheme } from "@/lib/theme";
-import { holdsBranches } from "@/shared/labels";
+import { attendsSelf } from "@/shared/labels";
 
 // Splash tetap tampil sampai sesi login tersimpan selesai dibaca.
 SplashScreen.preventAutoHideAsync();
@@ -66,7 +66,7 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" />
         </Stack.Protected>
         {/* Office = SPV yang boleh absen di cabang mana pun → memakai layar SPV yang sama. */}
-        <Stack.Protected guard={signedIn && holdsBranches(role)}>
+        <Stack.Protected guard={signedIn && attendsSelf(role)}>
           <Stack.Screen name="spv" />
         </Stack.Protected>
         <Stack.Protected guard={signedIn && role === "admin"}>

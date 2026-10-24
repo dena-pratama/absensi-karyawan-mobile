@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ActionButton, Card, ChipButton, kit, LoadingCard, Notice, Pill, TabScreen } from "@/components/kit";
 import { addDays, DateStepper, SelectField } from "@/components/pickers";
+import { useAuth } from "@/lib/auth";
 import { fetchBackups, formatRange, type Backup } from "@/lib/backup";
 import {
   deleteBackup,
@@ -50,6 +51,7 @@ function BackupForm({
   onSaved: () => void;
 }) {
   const { branches } = useSpv();
+  const isOffice = useAuth().role === "office";
   const today = todayWIB();
   const [form, setForm] = useState(initial);
   const [employees, setEmployees] = useState<EmployeeOption[] | null>(null);
@@ -60,7 +62,7 @@ function BackupForm({
   // Pilihan karyawan = yang ditempatkan di cabang SPV pada tanggal mulai backup.
   useEffect(() => {
     let active = true;
-    Promise.all([fetchBranchEmployees(branches, form.dateFrom), fetchAllBranches()])
+    Promise.all([fetchBranchEmployees(branches, form.dateFrom, isOffice), fetchAllBranches()])
       .then(([emps, all]) => {
         if (!active) return;
         setEmployees(emps);
@@ -72,7 +74,7 @@ function BackupForm({
     return () => {
       active = false;
     };
-  }, [branches, form.dateFrom]);
+  }, [branches, form.dateFrom, isOffice]);
 
   // Karyawan yang sedang diedit tetap muncul walau sudah tidak di cabang SPV.
   const employeeOptions = [

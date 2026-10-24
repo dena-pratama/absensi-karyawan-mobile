@@ -2,6 +2,19 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-27 — Koreksi role Office: otomatis semua cabang
+
+Migrasi web `20261027000000_office_role.sql` direvisi (belum dijalankan saat ditulis).
+- Urutan role: **Admin > Office > SPV > Karyawan**. Office **otomatis memegang semua cabang**: tidak ada daftar
+  cabang di Pengguna & Akses, `app_user_branch` kosong, `app_user.branch_id` boleh kosong.
+- `labels.ts` disalin ulang dari web: `holdsBranches()` kini khusus SPV, `attendsSelf()` (SPV & Office) dipakai
+  untuk routing ke layar `spv/` dan `EmployeeProvider`.
+- `SpvProvider`: daftar cabang Office dibaca langsung dari tabel `branch` (RLS memberi Office semua cabang),
+  tidak bergantung pada `app_user_branch` / `branch_id`. SPV tetap dari `app_user_branch`.
+- Pilihan karyawan di form Backup kini satu query (`.in(branch_id, …)`); Office tanpa filter cabang (semua).
+- Profil Office: "Office otomatis memegang semua cabang (N cabang)", bukan daftar panjang.
+- Pilihan outlet absen tetap dari `my_checkin_branches()` (Office: semua cabang aktif).
+
 ## 2026-10-27 — Role baru Office
 
 Pasangan migrasi web `20261027000000_office_role.sql`, yang belum dijalankan saat ditulis.

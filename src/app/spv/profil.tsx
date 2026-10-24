@@ -13,6 +13,7 @@ import { displayLogin } from "@/shared/login-id";
 
 export default function SpvProfil() {
   const { session, role, signOut } = useAuth();
+  const isOffice = role === "office";
   const { branches, loading, error, refresh } = useSpv();
   const [refreshing, setRefreshing] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -40,11 +41,15 @@ export default function SpvProfil() {
       </Card>
 
       <Card>
-        <CardTitle icon={{ android: "warehouse", ios: "building.2" }} label={`Cabang yang dipegang (${branches.length})`} />
+        <CardTitle icon={{ android: "warehouse", ios: "building.2" }} label={isOffice ? "Cabang" : `Cabang yang dipegang (${branches.length})`} />
         {loading ? (
           <LoadingCard label="Memuat cabang…" />
         ) : error ? (
           <Text style={kit.muted}>{error}</Text>
+        ) : isOffice ? (
+          <Text style={kit.body}>
+            Office otomatis memegang semua cabang ({branches.length} cabang). Absen bisa di cabang aktif mana pun.
+          </Text>
         ) : branches.length === 0 ? (
           <Text style={kit.muted}>Belum ada cabang. Hubungi admin.</Text>
         ) : (
@@ -64,8 +69,8 @@ export default function SpvProfil() {
       <Notice
         tone="muted"
         icon={{ android: "info", ios: "info.circle" }}
-        title={role === "office" ? "Absen Office" : "Absen SPV"}
-        message={`Absen lewat tab Absen: pilih outlet ${role === "office" ? "dari semua cabang" : "dari cabang Anda"}, lalu GPS + selfie. Check out boleh di outlet lain. Ceklis & monitoring absensi cabang dilakukan lewat panel web.`}
+        title={isOffice ? "Absen Office" : "Absen SPV"}
+        message={`Absen lewat tab Absen: pilih outlet ${isOffice ? "dari semua cabang aktif" : "dari cabang Anda"}, lalu GPS + selfie. Check out boleh di outlet lain. Ceklis & monitoring absensi cabang dilakukan lewat panel web.`}
       />
 
       <ThemeSetting />
