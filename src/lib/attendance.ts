@@ -85,7 +85,9 @@ export async function submitAttendance(
   fix: GpsFix,
   photoUri: string,
   branchId?: string,
-): Promise<{ ok: true } | { ok: false; message: string }> {
+): Promise<
+  { ok: true; at: string; branchId: string | null } | { ok: false; message: string }
+> {
   try {
     const body = await compressSelfie(photoUri);
     const path = `${employeeId}/${todayWIB()}_${kind}_${Date.now()}.jpg`;
@@ -101,7 +103,7 @@ export async function submitAttendance(
       };
     }
 
-    const { error } = await supabase.rpc("attendance_check", {
+    const { data, error } = await supabase.rpc("attendance_check", {
       p_kind: kind,
       p_lat: fix.lat,
       p_lng: fix.lng,
@@ -112,7 +114,16 @@ export async function submitAttendance(
       ...(branchId ? { p_branch: branchId } : {}),
     });
     if (error) return { ok: false, message: friendlyError(error) };
-    return { ok: true };
+    // Baris absensi dari server: jam & outlet yang tercatat (jam server, bukan jam HP).
+    const row = (Array.isArray(data) ? data[0] : data) as {
+      branch_id?: string;
+      check_in_at?: string | null;
+      check_out_at?: string | null;
+      check_out_branch_id?: string | null;
+    } | null;
+    const at = (kind === "in" ? row?.check_in_at : row?.check_out_at) ?? new Date().toISOString();
+    const recordedBranch = (kind === "out" ? row?.check_out_branch_id : null) ?? row?.branch_id ?? null;
+    return { ok: true, at, branchId: recordedBranch };
   } catch {
     return { ok: false, message: "Absen gagal dikirim. Periksa koneksi internet lalu coba lagi." };
   }

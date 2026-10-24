@@ -2,6 +2,17 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-25 — Pop up "Check In / Check Out Berhasil"
+
+- Setelah absen berhasil, muncul pop up (`src/components/attendance/SuccessDialog.tsx`):
+  - "Check In Berhasil" / "Check Out Berhasil";
+  - **Tercatat pukul 07:38 WIB**, tanggal, dan outlet ("di JKT109A - …");
+  - pengingat check out / ucapan selesai, dan tombol OK.
+- Jam & outlet diambil dari baris yang dikembalikan `attendance_check` (jam server, bukan jam HP).
+  `submitAttendance` kini mengembalikan `{ at, branchId }`.
+- Dicek tampilannya di pratinjau web (mode gelap & terang, ditempel sementara di layar login lalu dikembalikan).
+  Belum dicoba dengan absen sungguhan. Belum ada build EAS dengan perubahan ini.
+
 ## 2026-10-25 — Keterangan saat outlet check in SPV cuma satu
 
 - Laporan user: outlet check in SPV tidak bisa dipilih manual, karena daftarnya hanya berisi 1 outlet.

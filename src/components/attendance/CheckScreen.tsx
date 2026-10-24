@@ -16,6 +16,7 @@ import { Icon } from "../Icon";
 import { ActionButton, Avatar, Card, kit, LiveClock, LoadingCard, Notice, Pill, TabScreen, type Tone } from "../kit";
 import { evaluateGps, GpsCard } from "./GpsCard";
 import { OutletPicker, rankOutlets } from "./OutletPicker";
+import { SuccessDialog, type CheckSuccess } from "./SuccessDialog";
 import { SelfieCard } from "./SelfieCard";
 
 const TEXT: Record<CheckKind, { title: string; submit: string; done: string }> = {
@@ -96,6 +97,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [pickedOutlet, setPickedOutlet] = useState<string | null>(null);
+  const [success, setSuccess] = useState<CheckSuccess | null>(null);
   const isSpv = outlets !== undefined;
   const notLinked = error === NOT_LINKED_SPV || error === NOT_LINKED_KARYAWAN;
 
@@ -191,6 +193,10 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
     setSubmitError(null);
     const result = await submitAttendance(kind, profile.id, gps.fix, photoUri, isSpv ? (outletId ?? undefined) : undefined);
     if (result.ok) {
+      // Nama outlet tercatat: dari daftar cabang yang sudah dimuat (kandidat / pilihan outlet / profil).
+      const known = uniqueBranches([...candidates, ...outletOptions, profile.branch, profile.backupToday?.toBranch]);
+      const b = known.find((x) => x.id === result.branchId) ?? (candidates.length === 1 ? candidates[0] : null);
+      setSuccess({ kind, at: result.at, outlet: b ? `${b.code} - ${b.name}` : null });
       setPhotoUri(null);
       await refresh();
     } else {
@@ -275,6 +281,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
           </View>
         </>
       )}
+      <SuccessDialog success={success} onClose={() => setSuccess(null)} />
     </TabScreen>
   );
 }
