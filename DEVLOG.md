@@ -2,6 +2,12 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-27 — Build EAS: pop up absen, keterangan outlet, versi di bawah login, role Office
+
+- Dari commit `a8f7738` (sudah di-push user ke GitHub), kedua build **berhasil**:
+  - development `6f24bb8c-525e-48c2-acde-fa6731196dd5`: ±142 MB;
+  - preview `d7a12446-6104-4af0-830a-01578c6744b9`: ±64 MB.
+
 ## 2026-10-27 — Koreksi role Office: otomatis semua cabang
 
 Migrasi web `20261027000000_office_role.sql` direvisi (belum dijalankan saat ditulis).
