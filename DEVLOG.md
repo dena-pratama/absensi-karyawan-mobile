@@ -2,6 +2,15 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-25 — Keterangan saat outlet check in SPV cuma satu
+
+- Laporan user: outlet check in SPV tidak bisa dipilih manual, karena daftarnya hanya berisi 1 outlet.
+  Pemilihnya sendiri berfungsi; daftarnya memang hanya berisi:
+  - cabang yang dipegang SPV (`app_user_branch`) + penempatan & backup data karyawannya;
+  - kalau hari ini SPV sudah tercatat di satu cabang (mis. lewat ceklis web), hanya cabang itu (aturan server).
+- Pemilih outlet kini menjelaskan alasannya bila pilihannya cuma satu: "sudah tercatat di X lewat ceklis",
+  atau "akun SPV baru memegang 1 cabang, minta admin menambah cabang di Pengguna & Akses".
+
 ## 2026-10-25 — Ceklis Absensi dihapus dari app SPV
 
 - Keputusan user: Ceklis Absensi tidak dipakai di app (tidak bisa diisi SPV). Ceklis & monitoring cabang

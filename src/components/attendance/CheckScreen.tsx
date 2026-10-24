@@ -170,6 +170,13 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
       ? [today.branch]
       : uniqueBranches([...outlets, profile.branch, profile.backupToday?.toBranch, kind === "out" ? today?.branch : null]);
   const ranked = rankOutlets(outletOptions, gps);
+  // Jelaskan kenapa hanya ada satu pilihan outlet.
+  const outletNote =
+    ranked.length !== 1
+      ? undefined
+      : kind === "in" && today?.branch
+        ? `Hari ini Anda sudah tercatat di ${today.branch.code} (diisi lewat ceklis di web), jadi check in harus di outlet itu.`
+        : "Akun SPV ini baru memegang 1 cabang. Minta admin menambah cabang di panel web (Pengguna & Akses) supaya bisa memilih outlet lain.";
   // Pilihan pengguna dipakai selama masih ada di daftar; kalau belum memilih → outlet terdekat.
   const outletId = ranked.some((r) => r.branch.id === pickedOutlet) ? pickedOutlet : (ranked[0]?.branch.id ?? null);
   const candidates = isSpv ? ranked.filter((r) => r.branch.id === outletId).map((r) => r.branch) : autoCandidates;
@@ -241,6 +248,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
               value={outletId}
               onChange={setPickedOutlet}
               disabled={submitting}
+              note={outletNote}
             />
           )}
           <GpsCard gps={gps ?? { status: "locating" }} check={gpsCheck} onRefresh={updateLocation} />

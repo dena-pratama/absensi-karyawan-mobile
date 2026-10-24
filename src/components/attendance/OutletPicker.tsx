@@ -29,12 +29,15 @@ export function OutletPicker({
   onChange,
   disabled,
   title,
+  note,
 }: {
   ranked: Ranked[];
   value: string | null;
   onChange: (id: string) => void;
   disabled?: boolean;
   title: string;
+  /** Keterangan kenapa pilihannya terbatas (mis. hanya 1 outlet). */
+  note?: string;
 }) {
   return (
     <Card>
@@ -72,7 +75,9 @@ export function OutletPicker({
           </Pressable>
         );
       })}
-      <Text style={styles.hint}>Outlet terdekat dipilih otomatis. Ketuk untuk mengganti.</Text>
+      <Text style={styles.hint}>
+        {note ?? "Outlet terdekat dipilih otomatis. Ketuk untuk mengganti."}
+      </Text>
     </Card>
   );
 }
