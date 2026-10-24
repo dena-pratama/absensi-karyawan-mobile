@@ -2,6 +2,23 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-31 — Sesi yang dihapus Reset Data: kembali ke login dengan bersih
+
+Konteks: panel web punya Pengaturan → Reset Data (migrasi `20261031000000_reset_data.sql`). Reset ini menghapus
+sesi login (reset transaksi) atau akun (reset penuh) semua user kecuali admin.
+
+**Yang sudah aman sebelumnya:**
+- Perpanjangan token gagal → Supabase menghapus sesi & memicu `SIGNED_OUT` → `AuthProvider` mengosongkan sesi
+  → layar login.
+- Data layar (`EmployeeProvider`, `SpvProvider`) ikut terhapus karena rutenya dilepas. Data lama tidak tampil
+  untuk akun berikutnya. Yang disimpan di HP hanya sesi (terenkripsi) & pilihan tema.
+
+**Tambahan:** saat app dibuka / login, `readAccess` memanggil `supabase.auth.getUser()` dulu.
+- Sesi sudah tidak ada di server → Supabase menghapusnya sendiri.
+- Akun sudah dihapus (401/403/404) → `signOut({ scope: "local" })`.
+- Jadi app langsung ke layar login, tidak menunggu token kedaluwarsa (±1 jam) dan tidak tertahan di
+  layar "Akun belum diberi akses". Gangguan jaringan tidak dianggap logout.
+
 ## 2026-10-30 — Build EAS: WFA & Office outlet otomatis
 
 - Migrasi `20261030000000_wfa.sql` sudah dijalankan user di Supabase.

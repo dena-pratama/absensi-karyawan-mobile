@@ -1,7 +1,7 @@
 // Context sesi login + role akun. Role dibaca dari database lewat fungsi current_app_role()
 // (tabel app_user, diatur admin di web: Pengaturan → Pengguna & Akses).
 
-import type { AuthError, Session } from "@supabase/supabase-js";
+import { isAuthSessionMissingError, type AuthError, type Session } from "@supabase/supabase-js";
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from "react";
 
 import type { AppRole } from "@/shared/labels";
@@ -51,6 +51,17 @@ type Access = { session: Session | null; role: AppRole | null; roleError: string
 
 async function readAccess(session: Session | null): Promise<Access> {
   if (!session) return { session, role: null, roleError: null };
+
+  // Pastikan sesi tersimpan masih diakui server (bisa dihapus lewat Reset Data di panel web, atau akunnya
+  // dihapus). getUser() menghapus sesi sendiri bila sesinya sudah tidak ada; akun yang sudah dihapus
+  // ditangani di sini. Keduanya memicu SIGNED_OUT → kembali ke layar login tanpa data lama.
+  // Gangguan jaringan tidak dianggap logout (app tetap memakai sesi tersimpan).
+  const { error: userError } = await supabase.auth.getUser();
+  if (userError && (isAuthSessionMissingError(userError) || [401, 403, 404].includes(userError.status ?? 0))) {
+    await supabase.auth.signOut({ scope: "local" });
+    return { session: null, role: null, roleError: null };
+  }
+
   const { data, error } = await supabase.rpc("current_app_role");
   if (error) {
     return {
