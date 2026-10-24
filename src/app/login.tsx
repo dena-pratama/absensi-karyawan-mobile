@@ -83,11 +83,6 @@ export default function Login() {
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.topRow}>
-            <Icon android="sensors" ios="sensor" size={16} color={c.tint} />
-            <Text style={styles.version}>v{Constants.expoConfig?.version ?? "1.0.0"}</Text>
-          </View>
-
           <View style={styles.brand}>
             <View style={styles.logoOuter}>
               <View style={styles.logoInner}>
@@ -176,6 +171,11 @@ export default function Login() {
           </View>
 
           <Text style={styles.hint}>Belum punya akun atau lupa kata sandi? Hubungi admin / SPV cabang.</Text>
+
+          <View style={styles.versionRow}>
+            <Icon android="sensors" ios="sensor" size={16} color={c.tint} />
+            <Text style={styles.version}>v{Constants.expoConfig?.version ?? "1.0.0"}</Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -185,7 +185,7 @@ export default function Login() {
 const styles = themedStyles(() => ({
   screen: { flex: 1, backgroundColor: c.surface },
   scroll: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24, paddingVertical: 24, gap: 16 },
-  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 },
+  versionRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 8 },
   version: { color: c.onSurfaceVariant, fontFamily: fonts.medium, fontSize: 11 },
 
   brand: { alignItems: "center" },
