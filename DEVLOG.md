@@ -2,6 +2,14 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-27 — Fitur Libur dihapus
+
+Mengikuti web (commit 258374c) dan database (rollback `20261103000000_rollback_day_off.sql`): commit `475e980`
+di-revert. Tab Libur, `src/lib/dayoff.ts`, catatan libur di Absen, dan status Libur di Riwayat dihapus.
+`labels.ts` disalin ulang dari web. Sesi divalidasi ke server saat app dibuka (89addd0) tetap ada.
+Build EAS di bawah (dengan Libur) sudah tidak cocok dengan server. Build baru belum bisa dibuat karena
+kuota build Android paket Free EAS bulan ini habis (reset 1 Nov 2026).
+
 ## 2026-10-27 — Build EAS: fitur Libur
 
 Build Android dari commit `96b4ced` (fitur Libur + tukar off aktif di server):
