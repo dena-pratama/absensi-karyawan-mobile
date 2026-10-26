@@ -2,6 +2,12 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-27 — Build EAS: fitur Libur
+
+Build Android dari commit `96b4ced` (fitur Libur + tukar off aktif di server):
+- **preview** (APK siap pakai, ~64 MB): build `a88e286d-942b-41b9-ab1f-423b3ef70976`
+- **development** (dev client, ~142 MB): build `78b63f9a-92bb-4c2c-b6d0-20c098e9fbfd`
+
 ## 2026-10-27 — Libur: jatah, pengajuan, off pengganti, pindah & tukar off
 
 Pasangan migrasi web `20261101000000_day_off.sql`, yang belum dijalankan saat ditulis. Sebelum migrasi,
