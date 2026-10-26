@@ -2,6 +2,33 @@
 
 Catatan aktivitas penting. Entri terbaru di atas.
 
+## 2026-10-27 — Libur: jatah, pengajuan, off pengganti, pindah & tukar off
+
+Pasangan migrasi web `20261101000000_day_off.sql`, yang belum dijalankan saat ditulis. Sebelum migrasi,
+tab Libur menampilkan "Fitur libur belum aktif di server".
+
+**Tab Libur** untuk karyawan, SPV & Office (`src/components/LiburScreen.tsx`, data di `src/lib/dayoff.ts`):
+- **Jatah Libur**: sisa / jatah periode gajian (terpakai, menunggu), saldo **off pengganti** + tanggal habis terdekat.
+- **Ajukan Libur**: tanggal, pakai jatah atau off pengganti, keterangan → `day_off_request`.
+- **Libur Saya**: status (Diajukan, Disetujui, Ditolak, Dibatalkan, Dipindah, Masuk kerja), dengan aksi:
+  - **Batalkan** selama masih Diajukan;
+  - **Pindah**: pindah off, `p_replaces`, tidak memotong jatah lagi;
+  - **Tukar**: membuka form tukar dengan libur itu terpilih.
+- **Tukar Off dengan Rekan**:
+  - pilih libur saya + libur rekan satu cabang yang disetujui → `day_off_swap_request`;
+  - kotak **Permintaan Tukar dari Rekan** (Terima / Tolak);
+  - **Tukar Off Saya** (Batalkan).
+- **Perlu Persetujuan** (SPV & Office): pengajuan libur karyawan yang bisa dikelola + tukar off menunggu atasan,
+  tombol Setujui / Tolak. Server menentukan siapa yang berhak; tidak bisa menyetujui libur sendiri.
+
+**Lainnya:**
+- Nama rekan tidak bisa dibaca karyawan (RLS `employee`). Sudah diminta ke sesi web: fungsi
+  `day_off_swap_options()` & `my_day_off_swaps()` yang mengembalikan nama. Selama belum ada, app memakai
+  tabel langsung dan menampilkan "Rekan satu cabang" + tanggal.
+- **Absen**: kalau hari ini jadwal libur (status `libur`), muncul catatan "Hari ini jadwal libur Anda. Tetap bisa
+  absen…". Status `libur` tidak memblokir absen.
+- **Riwayat**: status **Libur** + statistik "Libur" per bulan. `labels.ts` disalin ulang dari web (status `libur`).
+
 ## 2026-10-31 — Sesi yang dihapus Reset Data: kembali ke login dengan bersih
 
 Konteks: panel web punya Pengaturan → Reset Data (migrasi `20261031000000_reset_data.sql`). Reset ini menghapus

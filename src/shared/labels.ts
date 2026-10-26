@@ -19,12 +19,14 @@ export const BRANCH_TYPE_LABEL: Record<BranchType, string> = {
   sub_agent: "Sub-Agent",
 };
 
-export type AttendanceStatus = "hadir" | "sakit" | "tidak_hadir";
+/** "libur" = jadwal libur disetujui (migrasi day_off); tidak dihitung tidak hadir. */
+export type AttendanceStatus = "hadir" | "sakit" | "tidak_hadir" | "libur";
 
 export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
   hadir: "Hadir",
   sakit: "Sakit",
   tidak_hadir: "Tidak Hadir",
+  libur: "Libur",
 };
 
 /** Kode cabang & NIK karyawan bebas format (huruf, angka, simbol, spasi): wajib diisi, maks. 30 karakter. */
@@ -60,3 +62,6 @@ export const KASBON_STATUS_LABEL: Record<KasbonStatus, string> = {
   lunas: "Lunas",
   dibatalkan: "Dibatalkan",
 };
+
+/** Kalimat yang harus diketik untuk konfirmasi Reset Data (sama dengan fungsi admin_reset_data). */
+export const RESET_PHRASE = "RESET DATABASE";
