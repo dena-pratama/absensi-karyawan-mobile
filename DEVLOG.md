@@ -24,6 +24,8 @@ tab Libur menampilkan "Fitur libur belum aktif di server".
 **Lainnya:**
 - Migrasi day_off sudah dijalankan user. Namun saat dicek (2026-10-27), `day_off_swap_options` & `my_day_off_swaps`
   belum ada di server (404); `day_off_quota` sudah ada. Diminta jalankan ulang bagian 9 + reload schema.
+  Lalu user menjalankan `20261102000000_day_off_swap_rpc.sql`: kedua fungsi kini ada (dicek: anon ditolak 401,
+  bukan 404). Nama rekan tampil setelah login karyawan (belum dicek dengan akun asli).
 - Nama rekan tidak bisa dibaca karyawan (RLS `employee`). Sudah diminta ke sesi web: fungsi
   `day_off_swap_options()` & `my_day_off_swaps()` yang mengembalikan nama. Selama belum ada, app memakai
   tabel langsung dan menampilkan "Rekan satu cabang" + tanggal.
