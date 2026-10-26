@@ -30,7 +30,6 @@ function shiftMonth({ year, month }: Month, delta: number): Month {
 function rowStatus(row: AttendanceRow, isToday: boolean): { tone: Tone; label: string } {
   if (row.status === "sakit") return { tone: "warning", label: ATTENDANCE_LABEL.sakit };
   if (row.status === "tidak_hadir") return { tone: "danger", label: ATTENDANCE_LABEL.tidak_hadir };
-  if (row.status === "libur") return { tone: "info", label: ATTENDANCE_LABEL.libur };
   if (!row.check_in_at) return { tone: "success", label: "Hadir (dicatat SPV)" };
   if (!row.check_out_at) return isToday ? { tone: "info", label: "Belum pulang" } : { tone: "warning", label: "Tanpa check-out" };
   return { tone: "success", label: "Hadir" };
@@ -152,7 +151,6 @@ export function HistoryScreen() {
   const hadir = rows?.filter((r) => r.status === "hadir").length ?? 0;
   const sakit = rows?.filter((r) => r.status === "sakit").length ?? 0;
   const absen = rows?.filter((r) => r.status === "tidak_hadir").length ?? 0;
-  const libur = rows?.filter((r) => r.status === "libur").length ?? 0;
   const worked = (rows ?? []).map(workedMinutes).filter((m): m is number => m !== null);
   const totalMinutes = worked.reduce((a, b) => a + b, 0);
 
@@ -192,7 +190,6 @@ export function HistoryScreen() {
               <StatBox label="Hadir" value={String(hadir)} unit="hari" tone={c.success} />
               <StatBox label="Sakit" value={String(sakit)} unit="hari" tone={c.warning} />
               <StatBox label="Tidak Hadir" value={String(absen)} unit="hari" tone={c.absent} />
-              <StatBox label="Libur" value={String(libur)} unit="hari" tone={c.tint} />
               <StatBox label="Jam Kerja" value={String(Math.floor(totalMinutes / 60))} unit="jam" tone={colors.brand} />
             </View>
             {worked.length > 0 && (

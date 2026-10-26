@@ -13,7 +13,7 @@ function tabIcon(android: IconName, ios: string) {
 }
 
 /**
- * Tab SPV & Office (Office = SPV yang boleh absen di cabang mana pun): Absen (pilih outlet), Riwayat absen SPV, Kasbon, Libur (+ persetujuan), Backup Karyawan, Profil.
+ * Tab SPV & Office (Office = SPV yang boleh absen di cabang mana pun): Absen (pilih outlet), Riwayat absen SPV, Kasbon, Backup Karyawan, Profil.
  * Absen & Riwayat memakai data karyawan yang dihubungkan admin ke akun SPV.
  * Ceklis / monitoring absensi cabang hanya lewat panel web (keputusan user).
  */
@@ -34,7 +34,6 @@ export default function SpvLayout() {
           <Tabs.Screen name="index" options={{ title: "Absen", tabBarIcon: tabIcon("fingerprint", "touchid") }} />
           <Tabs.Screen name="riwayat" options={{ title: "Riwayat", tabBarIcon: tabIcon("receipt_long", "list.bullet.rectangle") }} />
           <Tabs.Screen name="kasbon" options={{ title: "Kasbon", tabBarIcon: tabIcon("account_balance_wallet", "creditcard") }} />
-          <Tabs.Screen name="libur" options={{ title: "Libur", tabBarIcon: tabIcon("beach_access", "beach.umbrella") }} />
           <Tabs.Screen name="backup" options={{ title: "Backup", tabBarIcon: tabIcon("swap_horiz", "arrow.left.arrow.right") }} />
           <Tabs.Screen name="profil" options={{ title: "Profil", tabBarIcon: tabIcon("badge", "person.text.rectangle") }} />
         </Tabs>

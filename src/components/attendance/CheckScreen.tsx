@@ -143,9 +143,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
   const checkedOut = !!today?.check_out_at;
   const kind: CheckKind = fixedKind ?? (checkedIn ? "out" : "in");
   const title = fixedKind ? TEXT[kind].title : "Absen";
-  // Hari libur (jadwal disetujui) tetap boleh absen: status jadi Hadir + dapat 1 off pengganti.
-  const dayOffToday = today?.status === "libur" && !checkedIn;
-  const markedAbsent = today !== null && today.status !== "hadir" && today.status !== "libur";
+  const markedAbsent = today !== null && today.status !== "hadir";
   const done = kind === "in" ? checkedIn : checkedOut;
   const blocked = markedAbsent || (kind === "out" && !checkedIn);
   const canCapture = !!profile && !done && !blocked;
@@ -190,9 +188,7 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
     );
   }
 
-  const status: { tone: Tone; label: string } = dayOffToday
-    ? { tone: "info", label: "Jadwal libur" }
-    : markedAbsent
+  const status: { tone: Tone; label: string } = markedAbsent
     ? { tone: "warning", label: ATTENDANCE_LABEL[today!.status] }
     : checkedOut
       ? { tone: "success", label: "Selesai hari ini" }
@@ -272,15 +268,6 @@ export function CheckScreen({ kind: fixedKind, outlets }: { kind?: CheckKind; ou
           icon={{ android: "swap_horiz", ios: "arrow.left.arrow.right" }}
           title={`Hari ini backup di ${backup.toBranch.code} - ${backup.toBranch.name}`}
           message={`Penugasan ${formatRange(backup.dateFrom, backup.dateTo)}${backup.note ? ` • ${backup.note}` : ""}. Absen di cabang ini; absensi hari ini dihitung di cabang tersebut.`}
-        />
-      )}
-
-      {dayOffToday && (
-        <Notice
-          tone="info"
-          icon={{ android: "beach_access", ios: "beach.umbrella" }}
-          title="Hari ini jadwal libur Anda"
-          message="Tetap bisa absen. Kalau masuk kerja, status jadi Hadir dan Anda dapat 1 off pengganti."
         />
       )}
 
